@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>GoldsPixel</title>
+        <link rel="icon" href="./images/logo.png">
+        <link rel="stylesheet" href="./styles/styles.css"></link>
+        <script defer src="./scripts/script.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <div class="toolbar">
+                    <button class="pencil-button">Pencil</button>
+                    <input type="color" class="color-picker">
+                    <button class="eraser-button">Eraser</button>
+                    <button class="save-button">Save</button>
+                </div>
+            </header>
+            <main>
+                <canvas class="background-canvas"></canvas>
+                <canvas class="drawing-canvas"></canvas>
+                <canvas class="shadow-canvas"></canvas>
+            </main>
+            <div class="popup-container" hidden>
+                <div class="save-popup">
+                    <input type="text" class="file-name">
+                    <button class="save-file">Save</button>
+                    <button class="close-popup">X</button>
+                </div>
+            </div>
+            <footer></footer>
+        </div>
+    </body>
+</html>
