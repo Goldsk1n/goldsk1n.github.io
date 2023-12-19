@@ -13,11 +13,14 @@ const saveFile = document.querySelector(".save-file");
 const fileName = document.querySelector(".file-name");
 const brushRange = document.querySelector(".brush-range");
 const brushSizeLabel = document.querySelector(".brush-size");
+const squareShapeButton = document.querySelector(".square-shape-button");
 
 const canvasSize = 600;
 
-let brushSize;
-updateBrushSize();
+let activeButtonColor = "rgba(0, 127, 0, 0.7)";
+let brushColor = "#000000";
+let strokeColor = "#000000";
+let brushSize = 1;
 
 function setCanvasSize(canvas, canvasSize) {
     canvas.width = canvasSize;
@@ -35,6 +38,8 @@ const shadowCtx = shadowCanvas.getContext("2d");
 const pixelCount = 50;
 
 const pixelSize = canvasSize / pixelCount;
+setLineWidth();
+updateBrushSize();
 
 bgCtx.fillStyle = "#E6E6E6";
 for (let i = 0; i < pixelCount; i++) {
@@ -44,43 +49,62 @@ for (let i = 0; i < pixelCount; i++) {
     }
 }
 
-let x, y;
 let isMouseDown = false;
-let isEraserOn;
+let mode;
 pencilOn();
 shadowCtx.fillStyle = "rgba(127, 127, 127, 0.4)";
 
+let x, y;
+let pathStart = { x, y };
+
 shadowCanvas.addEventListener("mousemove", (e) => {
-    if (isMouseDown) {
-        draw(x, y, pixelSize, pixelSize);
-    }
-    shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
-
-    x = pixelSize * roundToPixel(e.offsetX);
-    y = pixelSize * roundToPixel(e.offsetY);
-
-    shadowCtx.fillRect(
-        pixelSize * Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
-        pixelSize * Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
-        pixelSize * brushSize,
-        pixelSize * brushSize
-    );
-});
-
-function draw(x, y, pixelSize, pixelSize) {
-    if (isEraserOn) {
-        drawCtx.clearRect(
+    if (mode !== "square" || !isMouseDown) {
+        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+        shadowCtx.fillRect(
             pixelSize * Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
             pixelSize * Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
             pixelSize * brushSize,
             pixelSize * brushSize
         );
-    } else {
+    }
+
+    if (isMouseDown) {
+        draw(x, y, pixelSize, pixelSize);
+    }
+
+    x = pixelSize * roundToPixel(e.offsetX);
+    y = pixelSize * roundToPixel(e.offsetY);
+
+    
+});
+
+function draw(x, y, pixelSize, pixelSize) {
+    if (mode === "pencil") {
         drawCtx.fillRect(
-            pixelSize * Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
-            pixelSize * Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
+            pixelSize *
+                Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
+            pixelSize *
+                Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
             pixelSize * brushSize,
             pixelSize * brushSize
+        );
+    } else if (mode === "eraser") {
+        drawCtx.clearRect(
+            pixelSize *
+                Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
+            pixelSize *
+                Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
+            pixelSize * brushSize,
+            pixelSize * brushSize
+        );
+    } else if (mode === "square") {
+        shadowCtx.clearRect(0,0,canvasSize,canvasSize);
+
+        shadowCtx.strokeRect(
+            pathStart.x + pixelSize / 2,
+            pathStart.y + pixelSize / 2,
+            x - pathStart.x,
+            y - pathStart.y
         );
     }
 }
@@ -90,29 +114,61 @@ function roundToPixel(value) {
 }
 
 shadowCanvas.addEventListener("mousedown", (e) => {
+    if(mode === "square") {
+        shadowCtx.strokeStyle = brushColor;
+    }
+    pathStart = { x, y };
     draw(x, y, pixelSize, pixelSize);
     isMouseDown = true;
 });
 
 shadowCanvas.addEventListener("mouseup", (e) => {
+    if(mode === "square") {
+        shadowCtx.clearRect(0,0,canvasSize,canvasSize);
+        drawCtx.strokeRect(
+            pathStart.x + pixelSize / 2,
+            pathStart.y + pixelSize / 2,
+            x - pathStart.x,
+            y - pathStart.y
+        );
+        shadowCtx.fillStyle = "rgba(127, 127, 127, 0.4)";
+    }
     isMouseDown = false;
 });
 
 eraserButton.addEventListener("click", () => {
-    isEraserOn = true;
-    eraserButton.style.backgroundColor = "rgba(0, 127, 0, 0.7)";
+    mode = "eraser";
     pencilButton.style.backgroundColor = "white";
+    eraserButton.style.backgroundColor = activeButtonColor;
+    squareShapeButton.style.backgroundColor = "white";
 });
+
 pencilButton.addEventListener("click", (e) => pencilOn());
 
-function pencilOn() {
-    isEraserOn = false;
-    pencilButton.style.backgroundColor = "rgba(0, 127, 0, 0.7)";
+squareShapeButton.addEventListener("click", () => {
+    mode = "square";
+    pencilButton.style.backgroundColor = "white";
     eraserButton.style.backgroundColor = "white";
+    squareShapeButton.style.backgroundColor = activeButtonColor;
+});
+
+function setLineWidth() {
+    drawCtx.lineWidth = pixelSize * brushSize;
+    shadowCtx.lineWidth = pixelSize * brushSize;
+}
+
+function pencilOn() {
+    mode = "pencil";
+    pencilButton.style.backgroundColor = activeButtonColor;
+    eraserButton.style.backgroundColor = "white";
+    squareShapeButton.style.backgroundColor = "white";
 }
 
 colorPicker.addEventListener("change", () => {
-    drawCtx.fillStyle = colorPicker.value;
+    brushColor = colorPicker.value;
+    strokeColor = colorPicker.value;
+    drawCtx.fillStyle = brushColor;
+    drawCtx.strokeStyle = strokeColor;
 });
 
 saveButton.addEventListener("click", () => {
@@ -136,4 +192,5 @@ brushRange.addEventListener("input", updateBrushSize);
 function updateBrushSize() {
     brushSize = brushRange.value;
     brushSizeLabel.textContent = brushSize;
+    setLineWidth();
 }
