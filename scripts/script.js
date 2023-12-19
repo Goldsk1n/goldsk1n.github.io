@@ -36,7 +36,7 @@ const pixelCount = 50;
 
 const pixelSize = canvasSize / pixelCount;
 
-bgCtx.fillStyle = "#CCC";
+bgCtx.fillStyle = "#E6E6E6";
 for (let i = 0; i < pixelCount; i++) {
     const startPoint = i % 2;
     for (let j = startPoint; j < canvasSize; j += 2) {
@@ -48,7 +48,7 @@ let x, y;
 let isMouseDown = false;
 let isEraserOn;
 pencilOn();
-shadowCtx.fillStyle = "rgba(0, 0, 0, 0.5)";
+shadowCtx.fillStyle = "rgba(127, 127, 127, 0.4)";
 
 shadowCanvas.addEventListener("mousemove", (e) => {
     if (isMouseDown) {
@@ -70,15 +70,15 @@ shadowCanvas.addEventListener("mousemove", (e) => {
 function draw(x, y, pixelSize, pixelSize) {
     if (isEraserOn) {
         drawCtx.clearRect(
-            x - (pixelSize * brushSize) / 2,
-            y - (pixelSize * brushSize) / 2,
+            pixelSize * Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
+            pixelSize * Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
             pixelSize * brushSize,
             pixelSize * brushSize
         );
     } else {
         drawCtx.fillRect(
-            x - (pixelSize * brushSize) / 2,
-            y - (pixelSize * brushSize) / 2,
+            pixelSize * Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
+            pixelSize * Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
             pixelSize * brushSize,
             pixelSize * brushSize
         );
