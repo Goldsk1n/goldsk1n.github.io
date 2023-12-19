@@ -11,8 +11,13 @@ const popupContainer = document.querySelector(".popup-container");
 const closePopup = document.querySelector(".close-popup");
 const saveFile = document.querySelector(".save-file");
 const fileName = document.querySelector(".file-name");
+const brushRange = document.querySelector(".brush-range");
+const brushSizeLabel = document.querySelector(".brush-size");
 
 const canvasSize = 600;
+
+let brushSize;
+updateBrushSize();
 
 function setCanvasSize(canvas, canvasSize) {
     canvas.width = canvasSize;
@@ -49,19 +54,34 @@ shadowCanvas.addEventListener("mousemove", (e) => {
     if (isMouseDown) {
         draw(x, y, pixelSize, pixelSize);
     }
-    shadowCtx.clearRect(x, y, pixelSize, pixelSize);
+    shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
 
     x = pixelSize * roundToPixel(e.offsetX);
     y = pixelSize * roundToPixel(e.offsetY);
 
-    shadowCtx.fillRect(x, y, pixelSize, pixelSize);
+    shadowCtx.fillRect(
+        pixelSize * Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
+        pixelSize * Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
+        pixelSize * brushSize,
+        pixelSize * brushSize
+    );
 });
 
 function draw(x, y, pixelSize, pixelSize) {
     if (isEraserOn) {
-        drawCtx.clearRect(x, y, pixelSize, pixelSize);
+        drawCtx.clearRect(
+            x - (pixelSize * brushSize) / 2,
+            y - (pixelSize * brushSize) / 2,
+            pixelSize * brushSize,
+            pixelSize * brushSize
+        );
     } else {
-        drawCtx.fillRect(x, y, pixelSize, pixelSize);
+        drawCtx.fillRect(
+            x - (pixelSize * brushSize) / 2,
+            y - (pixelSize * brushSize) / 2,
+            pixelSize * brushSize,
+            pixelSize * brushSize
+        );
     }
 }
 
@@ -96,17 +116,24 @@ colorPicker.addEventListener("change", () => {
 });
 
 saveButton.addEventListener("click", () => {
-    popupContainer.style.display = 'flex';
+    popupContainer.style.display = "flex";
 });
 
 closePopup.addEventListener("click", () => {
-    popupContainer.style.display = 'none';
+    popupContainer.style.display = "none";
 });
 
 saveFile.addEventListener("click", () => {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.download = `${fileName.value}.png`;
     link.href = drawCanvas.toDataURL();
     link.click();
     link.delete;
 });
+
+brushRange.addEventListener("input", updateBrushSize);
+
+function updateBrushSize() {
+    brushSize = brushRange.value;
+    brushSizeLabel.textContent = brushSize;
+}
