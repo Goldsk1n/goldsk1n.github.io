@@ -123,7 +123,7 @@ function draw(x, y, pixelSize, pixelSize) {
             pathStart.x,
             pathStart.y,
             Math.max(x - pathStart.x, y - pathStart.y),
-            pixelSize
+            pixelSize * brushSize
         );
     }
 }
@@ -169,7 +169,7 @@ shadowCanvas.addEventListener("mouseup", (e) => {
             pathStart.x,
             pathStart.y,
             Math.max(x - pathStart.x, y - pathStart.y),
-            pixelSize
+            pixelSize * brushSize
         );
         shadowCtx.fillStyle = shadowColor;
     }
@@ -306,12 +306,12 @@ function drawPixelatedCircle(ctx, centerX, centerY, radius, pixelSize) {
     while (x >= y) {
         drawPixelQuadrants(ctx, centerX, centerY, x, y, pixelSize);
 
-        y += pixelSize;
+        y += pixelSize / brushSize;
 
         if (radiusError < 0) {
             radiusError += 2 * y + pixelSize;
         } else {
-            x -= pixelSize;
+            x -= pixelSize / brushSize;
             radiusError += 2 * (y - x) + pixelSize;
         }
     }
