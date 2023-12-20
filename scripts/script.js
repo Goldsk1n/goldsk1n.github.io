@@ -14,12 +14,14 @@ const fileName = document.querySelector(".file-name");
 const brushRange = document.querySelector(".brush-range");
 const brushSizeLabel = document.querySelector(".brush-size");
 const squareShapeButton = document.querySelector(".square-shape-button");
+const circleShapeButton = document.querySelector(".circle-shape-button");
+const drawTextButton = document.querySelector(".draw-text-button");
 
 const canvasSize = 600;
 
-let activeButtonColor = "rgba(0, 127, 0, 0.7)";
+const activeButtonColor = "rgba(0, 127, 0, 0.7)";
+const shadowColor = "rgba(127, 127, 127, 0.4)";
 let brushColor = "#000000";
-let strokeColor = "#000000";
 let brushSize = 1;
 
 function setCanvasSize(canvas, canvasSize) {
@@ -50,19 +52,24 @@ for (let i = 0; i < pixelCount; i++) {
 }
 
 let isMouseDown = false;
+let isTypingText = false;
+let textValue = "";
 let mode;
 pencilOn();
-shadowCtx.fillStyle = "rgba(127, 127, 127, 0.4)";
+shadowCtx.fillStyle = shadowColor;
 
 let x, y;
+let textCoords = { x, y };
 let pathStart = { x, y };
 
 shadowCanvas.addEventListener("mousemove", (e) => {
-    if (mode !== "square" || !isMouseDown) {
+    if ((mode === "pencil" || mode === "eraser" || !isMouseDown) && !isTypingText) {
         shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
         shadowCtx.fillRect(
-            pixelSize * Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
-            pixelSize * Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
+            pixelSize *
+                Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
+            pixelSize *
+                Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
             pixelSize * brushSize,
             pixelSize * brushSize
         );
@@ -74,9 +81,11 @@ shadowCanvas.addEventListener("mousemove", (e) => {
 
     x = pixelSize * roundToPixel(e.offsetX);
     y = pixelSize * roundToPixel(e.offsetY);
-
-    
 });
+
+shadowCanvas.addEventListener("mouseout", () =>
+    shadowCtx.clearRect(0, 0, canvasSize, canvasSize)
+);
 
 function draw(x, y, pixelSize, pixelSize) {
     if (mode === "pencil") {
@@ -98,13 +107,23 @@ function draw(x, y, pixelSize, pixelSize) {
             pixelSize * brushSize
         );
     } else if (mode === "square") {
-        shadowCtx.clearRect(0,0,canvasSize,canvasSize);
+        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
 
         shadowCtx.strokeRect(
             pathStart.x + pixelSize / 2,
             pathStart.y + pixelSize / 2,
             x - pathStart.x,
             y - pathStart.y
+        );
+    } else if (mode === "circle") {
+        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+
+        drawPixelatedCircle(
+            shadowCtx,
+            pathStart.x,
+            pathStart.y,
+            Math.max(x - pathStart.x, y - pathStart.y),
+            pixelSize
         );
     }
 }
@@ -114,8 +133,14 @@ function roundToPixel(value) {
 }
 
 shadowCanvas.addEventListener("mousedown", (e) => {
-    if(mode === "square") {
+    if (e.button === 2) {
+        console.log("a");
+        eraserOn();
+    }
+    if (mode === "square") {
         shadowCtx.strokeStyle = brushColor;
+    } else if (mode === "circle") {
+        shadowCtx.fillStyle = brushColor;
     }
     pathStart = { x, y };
     draw(x, y, pixelSize, pixelSize);
@@ -123,25 +148,82 @@ shadowCanvas.addEventListener("mousedown", (e) => {
 });
 
 shadowCanvas.addEventListener("mouseup", (e) => {
-    if(mode === "square") {
-        shadowCtx.clearRect(0,0,canvasSize,canvasSize);
+    if (e.button === 2) {
+        console.log("b");
+        mode === "pencil";
+        pencilOn();
+    }
+    if (mode === "square") {
+        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
         drawCtx.strokeRect(
             pathStart.x + pixelSize / 2,
             pathStart.y + pixelSize / 2,
             x - pathStart.x,
             y - pathStart.y
         );
-        shadowCtx.fillStyle = "rgba(127, 127, 127, 0.4)";
+        shadowCtx.strokeStyle = shadowColor;
+    } else if (mode === "circle") {
+        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+        drawPixelatedCircle(
+            drawCtx,
+            pathStart.x,
+            pathStart.y,
+            Math.max(x - pathStart.x, y - pathStart.y),
+            pixelSize
+        );
+        shadowCtx.fillStyle = shadowColor;
     }
     isMouseDown = false;
 });
 
-eraserButton.addEventListener("click", () => {
+shadowCanvas.addEventListener("click", () => {
+    if (mode === "text") {
+        if(isTypingText) {
+            drawCtx.fillText(textValue, textCoords.x, textCoords.y);
+            isTypingText = false;
+            textValue = "";
+            shadowCtx.fillStyle = shadowColor;
+        } else {
+            textCoords = {x, y};
+            shadowCtx.fillStyle = brushColor;
+            shadowCtx.font = `${brushSize * pixelSize}px monospace`;
+            drawCtx.font = `${brushSize * pixelSize}px monospace`;
+            console.log(brushSize * pixelSize);
+            isTypingText = true;
+        }
+    }
+});
+
+window.addEventListener("keydown", (e) => {
+    console.log(e.key);
+    if (isTypingText) {
+        if (e.key.length === 1 || e.key === "Space") {
+            shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+            textValue += e.key;
+            shadowCtx.fillText(textValue, textCoords.x, textCoords.y);
+        } else if(e.key === "Backspace") {
+                console.log("back");
+                shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+                textValue = textValue.slice(0, -1);
+                shadowCtx.fillText(textValue, textCoords.x, textCoords.y);
+        } else if (e.key === "Enter") {
+            drawCtx.fillText(textValue, textCoords.x, textCoords.y);
+            isTypingText = false;
+            textValue = "";
+            shadowCtx.fillStyle = shadowColor;
+        }
+    }
+});
+
+eraserButton.addEventListener("click", eraserOn);
+
+function eraserOn() {
     mode = "eraser";
     pencilButton.style.backgroundColor = "white";
     eraserButton.style.backgroundColor = activeButtonColor;
     squareShapeButton.style.backgroundColor = "white";
-});
+    drawTextButton.style.backgroundColor = "white";
+}
 
 pencilButton.addEventListener("click", (e) => pencilOn());
 
@@ -150,25 +232,46 @@ squareShapeButton.addEventListener("click", () => {
     pencilButton.style.backgroundColor = "white";
     eraserButton.style.backgroundColor = "white";
     squareShapeButton.style.backgroundColor = activeButtonColor;
+    circleShapeButton.style.backgroundColor = "white";
+    drawTextButton.style.backgroundColor = "white";
 });
 
-function setLineWidth() {
-    drawCtx.lineWidth = pixelSize * brushSize;
-    shadowCtx.lineWidth = pixelSize * brushSize;
-}
+circleShapeButton.addEventListener("click", () => {
+    mode = "circle";
+    pencilButton.style.backgroundColor = "white";
+    eraserButton.style.backgroundColor = "white";
+    squareShapeButton.style.backgroundColor = "white";
+    circleShapeButton.style.backgroundColor = activeButtonColor;
+    drawTextButton.style.backgroundColor = "white";
+});
+
+drawTextButton.addEventListener("click", () => {
+    mode = "text";
+    pencilButton.style.backgroundColor = "white";
+    eraserButton.style.backgroundColor = "white";
+    squareShapeButton.style.backgroundColor = "white";
+    circleShapeButton.style.backgroundColor = "white";
+    drawTextButton.style.backgroundColor = activeButtonColor;
+});
 
 function pencilOn() {
     mode = "pencil";
     pencilButton.style.backgroundColor = activeButtonColor;
     eraserButton.style.backgroundColor = "white";
     squareShapeButton.style.backgroundColor = "white";
+    circleShapeButton.style.backgroundColor = "white";
+    drawTextButton.style.backgroundColor = "white";
+}
+
+function setLineWidth() {
+    drawCtx.lineWidth = pixelSize * brushSize;
+    shadowCtx.lineWidth = pixelSize * brushSize;
 }
 
 colorPicker.addEventListener("change", () => {
     brushColor = colorPicker.value;
-    strokeColor = colorPicker.value;
     drawCtx.fillStyle = brushColor;
-    drawCtx.strokeStyle = strokeColor;
+    drawCtx.strokeStyle = brushColor;
 });
 
 saveButton.addEventListener("click", () => {
@@ -193,4 +296,41 @@ function updateBrushSize() {
     brushSize = brushRange.value;
     brushSizeLabel.textContent = brushSize;
     setLineWidth();
+}
+
+function drawPixelatedCircle(ctx, centerX, centerY, radius, pixelSize) {
+    let x = radius;
+    let y = 0;
+    let radiusError = 1 - x;
+
+    while (x >= y) {
+        drawPixelQuadrants(ctx, centerX, centerY, x, y, pixelSize);
+
+        y += pixelSize;
+
+        if (radiusError < 0) {
+            radiusError += 2 * y + pixelSize;
+        } else {
+            x -= pixelSize;
+            radiusError += 2 * (y - x) + pixelSize;
+        }
+    }
+}
+
+function drawPixelQuadrants(ctx, centerX, centerY, x, y, pixelSize) {
+    drawPixel(ctx, centerX + x, centerY + y, pixelSize);
+    drawPixel(ctx, centerX - x, centerY + y, pixelSize);
+    drawPixel(ctx, centerX + x, centerY - y, pixelSize);
+    drawPixel(ctx, centerX - x, centerY - y, pixelSize);
+
+    if (x != y) {
+        drawPixel(ctx, centerX + y, centerY + x, pixelSize);
+        drawPixel(ctx, centerX - y, centerY + x, pixelSize);
+        drawPixel(ctx, centerX + y, centerY - x, pixelSize);
+        drawPixel(ctx, centerX - y, centerY - x, pixelSize);
+    }
+}
+
+function drawPixel(ctx, x, y, pixelSize) {
+    ctx.fillRect(x, y, pixelSize, pixelSize);
 }
