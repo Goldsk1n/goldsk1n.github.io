@@ -1,32 +1,51 @@
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+@font-face {
+    font-family: "Pixel5x5";
+    src: url("../fonts/pixel-font-5x5.ttf");
+    font-display:block;
 }
 
 body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-.container {
-    width: 1000px;
-    margin: 0 auto;
-}
-
-.toolbar {
-    width: inherit;
+.sidebar {
+    width: 250px;
+    height: 600px;
     padding: 10px;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    justify-content: space-evenly;
     border: 1px solid black;
     border-radius: 10px;
 }
 
-.toolbar button {
+.color-picker {
+    width: 100%;
+}
+
+.toolbar {
+    margin: 10px auto;
+    width: 870px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-evenly;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+
+button {
     padding: 5px 10px;
     font-size: 1.2rem;
     transition: 0.05s;
 }
 
-.toolbar button:hover {
+button:hover {
     transform: scale(1.02);
 }
 
@@ -34,14 +53,32 @@ body {
     height: 40px;
 }
 
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 main {
-    width: 600px;
-    margin: 20px auto;
+    display: flex;
+    margin: 10px auto;
+    gap: 20px;
+}
+
+.canvas-container {
+    position: relative;
 }
 
 canvas {
-    position: absolute;
     border: 1px solid black;
+}
+
+canvas[class*="layer"] {
+    top:0;
+    left: 0;
+    position: absolute;
+    font-smooth: never;
+    -webkit-font-smoothing : none;
 }
 
 .popup-container {
@@ -56,14 +93,16 @@ canvas {
     align-items: center;
 }
 
-.save-popup {
-    padding: 30px 10px;
+.new-file-popup, .save-popup {
+    display: none;
+    padding: 30px;
     position: absolute;
-    background-color: #666;
+    background-color: #222222;
 }
 
 .close-popup {
     background-color: rgba(0,0,0,0);
+    color: #CCCCCC;
     border: 0;
     position: absolute;
     right: 0;
@@ -72,11 +111,19 @@ canvas {
 
 .file-name {
     width: 150px;
+    padding: 5px;
+    font-size: 1.2rem;
 }
 
-.brush-size-container {
+.file-ext {
+    width: 50px;
+    padding: 5px;
+    font-size: 1.2rem;
+}
+
+.range-container {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     gap: 10px;
     align-items: center;
     text-align: center;
@@ -84,4 +131,11 @@ canvas {
 
 .brush-range {
     cursor: pointer;
+}
+
+.new-file-popup {
+    color: #CCCCCC;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
 }

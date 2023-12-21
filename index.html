@@ -11,24 +11,39 @@
         <div class="container">
             <header>
                 <div class="toolbar">
-                    <label class="brush-size-container"><span>Brush size:<br><span class="brush-size"></span></span><input class="brush-range" type="range" min="1" max="10" step="1" value="1"></label>
+                    <button class="new-file-button">New file</button>
+                    <button class="clear-button">Clear</button>
+                    <button class="undo-button">Undo</button>
+                    <button class="redo-button">Redo</button>
+                    <button class="save-button">Save</button>
+                </div>
+            </header>
+            <main>
+                <div class="sidebar">
+                    <label class="range-container"><span>Brush size:<br><span class="brush-size"></span></span><input class="brush-range" type="range" min="1" max="10" step="1" value="1"></label>
+                    <label class="range-container"><span>Font size:<br><span class="font-size"></span></span><input class="font-range" type="range" min="5" max="20" step="5" value="5"></label>
                     <button class="pencil-button">Pencil</button>
                     <button class="square-shape-button">Square</button>
                     <button class="circle-shape-button">Circle</button>
                     <button class="draw-text-button">Text</button>
                     <input type="color" class="color-picker">
                     <button class="eraser-button">Eraser</button>
-                    <button class="save-button">Save</button>
                 </div>
-            </header>
-            <main>
-                <canvas class="background-canvas"></canvas>
-                <canvas class="drawing-canvas"></canvas>
-                <canvas class="shadow-canvas"></canvas>
+                <div class="canvas-container">
+                    <canvas class="background-canvas"></canvas>
+                    <canvas class="drawing-canvas layer"></canvas>
+                    <canvas class="shadow-canvas layer"></canvas>
+                </div>
             </main>
-            <div class="popup-container" hidden>
+            <div class="popup-container">
+                <div class="new-file-popup">
+                    <label class="range-container"><span>Canvas size:<br><span class="canvas-size"></span></span><input class="canvas-range" type="range" min="8" max="100" step="2" value="8"></label>
+                    <button class="draw-new-button">New Drawing</button>
+                    <button class="close-popup">X</button>
+                </div>
                 <div class="save-popup">
                     <input type="text" class="file-name">
+                    <input type="text" class="file-ext" value=".png" disabled>
                     <button class="save-file">Save</button>
                     <button class="close-popup">X</button>
                 </div>

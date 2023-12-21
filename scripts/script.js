@@ -8,7 +8,8 @@ const eraserButton = document.querySelector(".eraser-button");
 const colorPicker = document.querySelector(".color-picker");
 const saveButton = document.querySelector(".save-button");
 const popupContainer = document.querySelector(".popup-container");
-const closePopup = document.querySelector(".close-popup");
+const savePopup = document.querySelector(".save-popup");
+const closePopup = document.querySelectorAll(".close-popup");
 const saveFile = document.querySelector(".save-file");
 const fileName = document.querySelector(".file-name");
 const brushRange = document.querySelector(".brush-range");
@@ -16,6 +17,14 @@ const brushSizeLabel = document.querySelector(".brush-size");
 const squareShapeButton = document.querySelector(".square-shape-button");
 const circleShapeButton = document.querySelector(".circle-shape-button");
 const drawTextButton = document.querySelector(".draw-text-button");
+const fontRange = document.querySelector(".font-range");
+const fontSizeLabel = document.querySelector(".font-size");
+const clearButton = document.querySelector(".clear-button");
+const newFileButton = document.querySelector(".new-file-button");
+const newFilePopup = document.querySelector(".new-file-popup");
+const canvasRange = document.querySelector(".canvas-range");
+const canvasSizeLabel = document.querySelector(".canvas-size");
+const drawNewButton = document.querySelector(".draw-new-button");
 
 const canvasSize = 600;
 
@@ -37,19 +46,18 @@ const bgCtx = bgCanvas.getContext("2d");
 const drawCtx = drawCanvas.getContext("2d");
 const shadowCtx = shadowCanvas.getContext("2d");
 
-const pixelCount = 50;
+bgCtx.fillStyle = "#E6E6E6";
 
-const pixelSize = canvasSize / pixelCount;
+let pixelCount;
+updateCanvasSize();
+let pixelSize;
+setCanvas();
+
 setLineWidth();
 updateBrushSize();
 
-bgCtx.fillStyle = "#E6E6E6";
-for (let i = 0; i < pixelCount; i++) {
-    const startPoint = i % 2;
-    for (let j = startPoint; j < canvasSize; j += 2) {
-        bgCtx.fillRect(i * pixelSize, j * pixelSize, pixelSize, pixelSize);
-    }
-}
+let fontSize;
+updateFontSize();
 
 let isMouseDown = false;
 let isTypingText = false;
@@ -63,8 +71,11 @@ let textCoords = { x, y };
 let pathStart = { x, y };
 
 shadowCanvas.addEventListener("mousemove", (e) => {
-    if ((mode === "pencil" || mode === "eraser" || !isMouseDown) && !isTypingText) {
-        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+    if (
+        (mode === "pencil" || mode === "eraser" || !isMouseDown) &&
+        !isTypingText
+    ) {
+        clear(shadowCtx);
         shadowCtx.fillRect(
             pixelSize *
                 Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
@@ -83,9 +94,11 @@ shadowCanvas.addEventListener("mousemove", (e) => {
     y = pixelSize * roundToPixel(e.offsetY);
 });
 
-shadowCanvas.addEventListener("mouseout", () =>
-    shadowCtx.clearRect(0, 0, canvasSize, canvasSize)
-);
+shadowCanvas.addEventListener("mouseout", () => {
+    if (!isTypingText) {
+        clear(shadowCtx);
+    }
+});
 
 function draw(x, y, pixelSize, pixelSize) {
     if (mode === "pencil") {
@@ -107,7 +120,7 @@ function draw(x, y, pixelSize, pixelSize) {
             pixelSize * brushSize
         );
     } else if (mode === "square") {
-        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+        clear(shadowCtx);
 
         shadowCtx.strokeRect(
             pathStart.x + pixelSize / 2,
@@ -116,7 +129,7 @@ function draw(x, y, pixelSize, pixelSize) {
             y - pathStart.y
         );
     } else if (mode === "circle") {
-        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+        clear(shadowCtx);
 
         drawPixelatedCircle(
             shadowCtx,
@@ -133,8 +146,20 @@ function roundToPixel(value) {
 }
 
 shadowCanvas.addEventListener("mousedown", (e) => {
+    if (mode === "text") {
+        if (isTypingText) {
+            drawCtx.fillText(textValue, textCoords.x, textCoords.y);
+            isTypingText = false;
+            textValue = "";
+            shadowCtx.fillStyle = shadowColor;
+        } else {
+            textCoords = { x, y };
+            shadowCtx.fillStyle = brushColor;
+            isTypingText = true;
+        }
+    }
+
     if (e.button === 2) {
-        console.log("a");
         eraserOn();
     }
     if (mode === "square") {
@@ -149,12 +174,11 @@ shadowCanvas.addEventListener("mousedown", (e) => {
 
 shadowCanvas.addEventListener("mouseup", (e) => {
     if (e.button === 2) {
-        console.log("b");
         mode === "pencil";
         pencilOn();
     }
     if (mode === "square") {
-        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+        clear(shadowCtx);
         drawCtx.strokeRect(
             pathStart.x + pixelSize / 2,
             pathStart.y + pixelSize / 2,
@@ -163,7 +187,7 @@ shadowCanvas.addEventListener("mouseup", (e) => {
         );
         shadowCtx.strokeStyle = shadowColor;
     } else if (mode === "circle") {
-        shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
+        clear(shadowCtx);
         drawPixelatedCircle(
             drawCtx,
             pathStart.x,
@@ -176,37 +200,17 @@ shadowCanvas.addEventListener("mouseup", (e) => {
     isMouseDown = false;
 });
 
-shadowCanvas.addEventListener("click", () => {
-    if (mode === "text") {
-        if(isTypingText) {
-            drawCtx.fillText(textValue, textCoords.x, textCoords.y);
-            isTypingText = false;
-            textValue = "";
-            shadowCtx.fillStyle = shadowColor;
-        } else {
-            textCoords = {x, y};
-            shadowCtx.fillStyle = brushColor;
-            shadowCtx.font = `${brushSize * pixelSize}px monospace`;
-            drawCtx.font = `${brushSize * pixelSize}px monospace`;
-            console.log(brushSize * pixelSize);
-            isTypingText = true;
-        }
-    }
-});
-
 window.addEventListener("keydown", (e) => {
-    console.log(e.key);
     if (isTypingText) {
         if (e.key.length === 1 || e.key === "Space") {
-            shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
-            textValue += e.key;
+            clear(shadowCtx);
+            textValue += e.key.toUpperCase();
             shadowCtx.fillText(textValue, textCoords.x, textCoords.y);
-        } else if(e.key === "Backspace") {
-                console.log("back");
-                shadowCtx.clearRect(0, 0, canvasSize, canvasSize);
-                textValue = textValue.slice(0, -1);
-                shadowCtx.fillText(textValue, textCoords.x, textCoords.y);
-        } else if (e.key === "Enter") {
+        } else if (e.key === "Backspace") {
+            clear(shadowCtx);
+            textValue = textValue.slice(0, -1);
+            shadowCtx.fillText(textValue, textCoords.x, textCoords.y);
+        } else if (e.key === "Enter" || e.key === "Escape") {
             drawCtx.fillText(textValue, textCoords.x, textCoords.y);
             isTypingText = false;
             textValue = "";
@@ -276,11 +280,22 @@ colorPicker.addEventListener("change", () => {
 
 saveButton.addEventListener("click", () => {
     popupContainer.style.display = "flex";
+    savePopup.style.display = "block";
 });
 
-closePopup.addEventListener("click", () => {
-    popupContainer.style.display = "none";
+newFileButton.addEventListener("click", () => {
+    popupContainer.style.display = "flex";
+    newFilePopup.style.display = "flex";
 });
+
+closePopup.forEach((node) =>
+    node.addEventListener("click", (e) => closeModal(e))
+);
+
+function closeModal(e) {
+    popupContainer.style.display = "none";
+    e.target.parentElement.style.display = "none";
+}
 
 saveFile.addEventListener("click", () => {
     const link = document.createElement("a");
@@ -291,11 +306,25 @@ saveFile.addEventListener("click", () => {
 });
 
 brushRange.addEventListener("input", updateBrushSize);
+fontRange.addEventListener("input", updateFontSize);
+canvasRange.addEventListener("input", updateCanvasSize);
 
 function updateBrushSize() {
     brushSize = brushRange.value;
     brushSizeLabel.textContent = brushSize;
     setLineWidth();
+}
+
+function updateFontSize() {
+    fontSize = fontRange.value;
+    fontSizeLabel.textContent = fontSize;
+    shadowCtx.font = `${fontSize * pixelSize * 2}px Pixel5x5`;
+    drawCtx.font = `${fontSize * pixelSize * 2}px Pixel5x5`;
+}
+
+function updateCanvasSize() {
+    pixelCount = canvasRange.value;
+    canvasSizeLabel.textContent = pixelCount;
 }
 
 function drawPixelatedCircle(ctx, centerX, centerY, radius, pixelSize) {
@@ -333,4 +362,32 @@ function drawPixelQuadrants(ctx, centerX, centerY, x, y, pixelSize) {
 
 function drawPixel(ctx, x, y, pixelSize) {
     ctx.fillRect(x, y, pixelSize, pixelSize);
+}
+
+clearButton.addEventListener("click", () => {
+    clear(drawCtx);
+});
+
+drawNewButton.addEventListener("click", (e) => {
+    clear(drawCtx);
+    clear(bgCtx);
+
+    setCanvas();
+
+    closeModal(e);
+});
+
+function clear(ctx) {
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
+}
+
+function setCanvas() {
+    pixelSize = canvasSize / pixelCount;
+
+    for (let i = 0; i < pixelCount; i++) {
+        const startPoint = i % 2;
+        for (let j = startPoint; j < canvasSize; j += 2) {
+            bgCtx.fillRect(i * pixelSize, j * pixelSize, pixelSize, pixelSize);
+        }
+    }
 }
