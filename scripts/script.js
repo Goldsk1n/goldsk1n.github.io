@@ -27,6 +27,7 @@ const canvasSizeLabel = document.querySelector(".canvas-size");
 const drawNewButton = document.querySelector(".draw-new-button");
 const undoButton = document.querySelector(".undo-button");
 const redoButton = document.querySelector(".redo-button");
+const lineButton = document.querySelector(".line-button");
 
 const canvasSize = 600;
 
@@ -173,7 +174,7 @@ shadowCanvas.addEventListener("mousedown", (e) => {
     }
     if (mode === "square") {
         shadowCtx.strokeStyle = brushColor;
-    } else if (mode === "circle") {
+    } else if (mode === "circle" || mode === "line") {
         shadowCtx.fillStyle = brushColor;
     }
     pathStart = { x, y };
@@ -207,6 +208,10 @@ shadowCanvas.addEventListener("mouseup", (e) => {
             pixelSize * brushSize
         );
         shadowCtx.fillStyle = shadowColor;
+    } else if (mode === "line") {
+        clear(shadowCtx);
+        drawPixelatedLine(drawCtx, pathStart.x, pathStart.y, x, y, pixelSize);
+        shadowCtx.fillStyle = shadowColor;
     }
 });
 
@@ -237,6 +242,7 @@ function eraserOn() {
     eraserButton.style.backgroundColor = activeButtonColor;
     squareShapeButton.style.backgroundColor = "white";
     drawTextButton.style.backgroundColor = "white";
+    lineButton.style.backgroundColor = "white";
 }
 
 pencilButton.addEventListener("click", (e) => pencilOn());
@@ -248,6 +254,7 @@ squareShapeButton.addEventListener("click", () => {
     squareShapeButton.style.backgroundColor = activeButtonColor;
     circleShapeButton.style.backgroundColor = "white";
     drawTextButton.style.backgroundColor = "white";
+    lineButton.style.backgroundColor = "white";
 });
 
 circleShapeButton.addEventListener("click", () => {
@@ -257,6 +264,7 @@ circleShapeButton.addEventListener("click", () => {
     squareShapeButton.style.backgroundColor = "white";
     circleShapeButton.style.backgroundColor = activeButtonColor;
     drawTextButton.style.backgroundColor = "white";
+    lineButton.style.backgroundColor = "white";
 });
 
 drawTextButton.addEventListener("click", () => {
@@ -266,6 +274,7 @@ drawTextButton.addEventListener("click", () => {
     squareShapeButton.style.backgroundColor = "white";
     circleShapeButton.style.backgroundColor = "white";
     drawTextButton.style.backgroundColor = activeButtonColor;
+    lineButton.style.backgroundColor = "white";
 });
 
 function pencilOn() {
@@ -275,6 +284,7 @@ function pencilOn() {
     squareShapeButton.style.backgroundColor = "white";
     circleShapeButton.style.backgroundColor = "white";
     drawTextButton.style.backgroundColor = "white";
+    lineButton.style.backgroundColor = "white";
 }
 
 function setLineWidth() {
@@ -406,7 +416,7 @@ undoButton.addEventListener("click", handleUndo);
 redoButton.addEventListener("click", handleRedo);
 
 function handleUndo() {
-    if(undoStack.length > 0) {
+    if (undoStack.length > 0) {
         const prevCanvas = undoStack.pop();
         redoStack.push(drawCanvas.toDataURL());
         canvasImage.src = prevCanvas;
@@ -414,7 +424,7 @@ function handleUndo() {
 }
 
 function handleRedo() {
-    if(redoStack.length > 0) {
+    if (redoStack.length > 0) {
         updateUndo();
         console.log("b");
         const nextCanvas = redoStack.pop();
@@ -430,3 +440,41 @@ canvasImage.addEventListener("load", () => {
     clear(drawCtx);
     drawCtx.drawImage(canvasImage, 0, 0, canvasSize, canvasSize);
 });
+
+lineButton.addEventListener("click", () => {
+    mode = "line";
+    pencilButton.style.backgroundColor = "white";
+    eraserButton.style.backgroundColor = "white";
+    squareShapeButton.style.backgroundColor = "white";
+    circleShapeButton.style.backgroundColor = "white";
+    drawTextButton.style.backgroundColor = "white";
+    lineButton.style.backgroundColor = activeButtonColor;
+});
+
+function drawPixelatedLine(ctx, x1, y1, x2, y2, pixelSize) {
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const sx = x1 < x2 ? pixelSize : -pixelSize;
+    const sy = y1 < y2 ? pixelSize : -pixelSize;
+    let err = dx - dy;
+
+    while (true) {
+        ctx.fillRect(x1, y1, pixelSize * brushSize, pixelSize * brushSize);
+
+        if (x1 === x2 && y1 === y2) {
+            break;
+        }
+
+        const err2 = 2 * err;
+
+        if (err2 > -dy) {
+            err -= dy;
+            x1 += sx;
+        }
+
+        if (err2 < dx) {
+            err += dx;
+            y1 += sy;
+        }
+    }
+}
