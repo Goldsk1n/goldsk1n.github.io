@@ -25,6 +25,8 @@ const newFilePopup = document.querySelector(".new-file-popup");
 const canvasRange = document.querySelector(".canvas-range");
 const canvasSizeLabel = document.querySelector(".canvas-size");
 const drawNewButton = document.querySelector(".draw-new-button");
+const undoButton = document.querySelector(".undo-button");
+const redoButton = document.querySelector(".redo-button");
 
 const canvasSize = 600;
 
@@ -69,6 +71,10 @@ shadowCtx.fillStyle = shadowColor;
 let x, y;
 let textCoords = { x, y };
 let pathStart = { x, y };
+
+const undoStack = [drawCanvas.toDataURL()];
+let redoStack = [];
+const canvasImage = new Image();
 
 shadowCanvas.addEventListener("mousemove", (e) => {
     if (
@@ -146,6 +152,9 @@ function roundToPixel(value) {
 }
 
 shadowCanvas.addEventListener("mousedown", (e) => {
+    redoStack = [];
+    updateUndo();
+
     if (mode === "text") {
         if (isTypingText) {
             drawCtx.fillText(textValue, textCoords.x, textCoords.y);
@@ -173,6 +182,8 @@ shadowCanvas.addEventListener("mousedown", (e) => {
 });
 
 shadowCanvas.addEventListener("mouseup", (e) => {
+    isMouseDown = false;
+
     if (e.button === 2) {
         mode === "pencil";
         pencilOn();
@@ -197,7 +208,6 @@ shadowCanvas.addEventListener("mouseup", (e) => {
         );
         shadowCtx.fillStyle = shadowColor;
     }
-    isMouseDown = false;
 });
 
 window.addEventListener("keydown", (e) => {
@@ -391,3 +401,32 @@ function setCanvas() {
         }
     }
 }
+
+undoButton.addEventListener("click", handleUndo);
+redoButton.addEventListener("click", handleRedo);
+
+function handleUndo() {
+    if(undoStack.length > 0) {
+        const prevCanvas = undoStack.pop();
+        redoStack.push(drawCanvas.toDataURL());
+        canvasImage.src = prevCanvas;
+    }
+}
+
+function handleRedo() {
+    if(redoStack.length > 0) {
+        updateUndo();
+        console.log("b");
+        const nextCanvas = redoStack.pop();
+        canvasImage.src = nextCanvas;
+    }
+}
+
+function updateUndo() {
+    undoStack.push(drawCanvas.toDataURL());
+}
+
+canvasImage.addEventListener("load", () => {
+    clear(drawCtx);
+    drawCtx.drawImage(canvasImage, 0, 0, canvasSize, canvasSize);
+});
