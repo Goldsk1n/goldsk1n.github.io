@@ -28,6 +28,7 @@ const drawNewButton = document.querySelector(".draw-new-button");
 const undoButton = document.querySelector(".undo-button");
 const redoButton = document.querySelector(".redo-button");
 const lineButton = document.querySelector(".line-button");
+const eyedropperButton = document.querySelector(".eyedropper-button");
 
 const canvasSize = 600;
 
@@ -167,20 +168,32 @@ shadowCanvas.addEventListener("mousedown", (e) => {
             shadowCtx.fillStyle = brushColor;
             isTypingText = true;
         }
+    } else if (mode === "eyedropper") {
+        const rgb = drawCtx.getImageData(x, y, 1, 1).data;
+        colorPicker.value = rgbToHex(rgb[0], rgb[1], rgb[2]);
+    } else if (mode === "square") {
+        shadowCtx.strokeStyle = brushColor;
+    } else if (mode === "circle" || mode === "line") {
+        shadowCtx.fillStyle = brushColor;
     }
 
     if (e.button === 2) {
         eraserOn();
     }
-    if (mode === "square") {
-        shadowCtx.strokeStyle = brushColor;
-    } else if (mode === "circle" || mode === "line") {
-        shadowCtx.fillStyle = brushColor;
-    }
+
     pathStart = { x, y };
     draw(x, y, pixelSize, pixelSize);
     isMouseDown = true;
 });
+
+function componentToHex(c) {
+    const hex = c.toString(16);
+    return ("0" + hex).slice(-2);
+};
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+};
 
 shadowCanvas.addEventListener("mouseup", (e) => {
     isMouseDown = false;
@@ -212,6 +225,8 @@ shadowCanvas.addEventListener("mouseup", (e) => {
         clear(shadowCtx);
         drawPixelatedLine(drawCtx, pathStart.x, pathStart.y, x, y, pixelSize);
         shadowCtx.fillStyle = shadowColor;
+    } else if (mode === "eyedropper") {
+        pencilOn();
     }
 });
 
@@ -243,6 +258,7 @@ function eraserOn() {
     squareShapeButton.style.backgroundColor = "white";
     drawTextButton.style.backgroundColor = "white";
     lineButton.style.backgroundColor = "white";
+    eyedropperButton.style.backgroundColor = "white";
 }
 
 pencilButton.addEventListener("click", (e) => pencilOn());
@@ -255,6 +271,7 @@ squareShapeButton.addEventListener("click", () => {
     circleShapeButton.style.backgroundColor = "white";
     drawTextButton.style.backgroundColor = "white";
     lineButton.style.backgroundColor = "white";
+    eyedropperButton.style.backgroundColor = "white";
 });
 
 circleShapeButton.addEventListener("click", () => {
@@ -265,6 +282,7 @@ circleShapeButton.addEventListener("click", () => {
     circleShapeButton.style.backgroundColor = activeButtonColor;
     drawTextButton.style.backgroundColor = "white";
     lineButton.style.backgroundColor = "white";
+    eyedropperButton.style.backgroundColor = "white";
 });
 
 drawTextButton.addEventListener("click", () => {
@@ -275,6 +293,7 @@ drawTextButton.addEventListener("click", () => {
     circleShapeButton.style.backgroundColor = "white";
     drawTextButton.style.backgroundColor = activeButtonColor;
     lineButton.style.backgroundColor = "white";
+    eyedropperButton.style.backgroundColor = "white";
 });
 
 function pencilOn() {
@@ -285,6 +304,7 @@ function pencilOn() {
     circleShapeButton.style.backgroundColor = "white";
     drawTextButton.style.backgroundColor = "white";
     lineButton.style.backgroundColor = "white";
+    eyedropperButton.style.backgroundColor = "white";
 }
 
 function setLineWidth() {
@@ -449,6 +469,7 @@ lineButton.addEventListener("click", () => {
     circleShapeButton.style.backgroundColor = "white";
     drawTextButton.style.backgroundColor = "white";
     lineButton.style.backgroundColor = activeButtonColor;
+    eyedropperButton.style.backgroundColor = "white";
 });
 
 function drawPixelatedLine(ctx, x1, y1, x2, y2, pixelSize) {
@@ -477,4 +498,17 @@ function drawPixelatedLine(ctx, x1, y1, x2, y2, pixelSize) {
             y1 += sy;
         }
     }
+}
+
+eyedropperButton.addEventListener("click", () => handleEyedropper());
+
+function handleEyedropper() {
+    mode = "eyedropper";
+    pencilButton.style.backgroundColor = "white";
+    eraserButton.style.backgroundColor = "white";
+    squareShapeButton.style.backgroundColor = "white";
+    circleShapeButton.style.backgroundColor = "white";
+    drawTextButton.style.backgroundColor = "white";
+    lineButton.style.backgroundColor = "white";
+    eyedropperButton.style.backgroundColor = activeButtonColor;
 }
