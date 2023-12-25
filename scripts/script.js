@@ -504,9 +504,7 @@ function floodFill(canvas, ctx, x, y, color) {
         a: pixels.data[linearCoords + 3],
     };
 
-    let k = 1000;
-
-    while (pixelStack.length > 0 && k > 0) {
+    while (pixelStack.length > 0) {
         newPixel = pixelStack.shift();
         x = newPixel.x;
         y = newPixel.y;
@@ -572,7 +570,6 @@ function floodFill(canvas, ctx, x, y, color) {
 
             linearCoords += canvasSize * 4;
         }
-        k--;
     }
 
     ctx.putImageData(pixels, 0, 0);
