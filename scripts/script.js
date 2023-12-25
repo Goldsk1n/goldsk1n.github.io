@@ -29,6 +29,7 @@ const undoButton = document.querySelector(".undo-button");
 const redoButton = document.querySelector(".redo-button");
 const lineButton = document.querySelector(".line-button");
 const eyedropperButton = document.querySelector(".eyedropper-button");
+const fillButton = document.querySelector(".fill-button");
 
 const canvasSize = 600;
 
@@ -66,8 +67,9 @@ updateFontSize();
 let isMouseDown = false;
 let isTypingText = false;
 let textValue = "";
-let mode;
-pencilOn();
+let prevMode, mode;
+let currentElem = pencilButton;
+activateMode("pencil");
 shadowCtx.fillStyle = shadowColor;
 
 let x, y;
@@ -153,55 +155,50 @@ function roundToPixel(value) {
     return Math.floor(value / pixelSize);
 }
 
-shadowCanvas.addEventListener("mousedown", (e) => {
+shadowCanvas.addEventListener("mousedown", handleMouseDown);
+
+function handleMouseDown(e) {
     redoStack = [];
     updateUndo();
 
-    if (mode === "text") {
-        if (isTypingText) {
-            drawCtx.fillText(textValue, textCoords.x, textCoords.y);
-            isTypingText = false;
-            textValue = "";
-            shadowCtx.fillStyle = shadowColor;
-        } else {
-            textCoords = { x, y };
-            shadowCtx.fillStyle = brushColor;
-            isTypingText = true;
-        }
-    } else if (mode === "eyedropper") {
-        const rgb = drawCtx.getImageData(x, y, 1, 1).data;
-        colorPicker.value = rgbToHex(rgb[0], rgb[1], rgb[2]);
-    } else if (mode === "square") {
-        shadowCtx.strokeStyle = brushColor;
-    } else if (mode === "circle" || mode === "line") {
-        shadowCtx.fillStyle = brushColor;
+    if (e.button === 2) {
+        activateMode("eraser");
     }
 
-    if (e.button === 2) {
-        eraserOn();
+    if (e.button === 0) {
+        if (mode === "text") {
+            if (isTypingText) {
+                drawCtx.fillText(textValue, textCoords.x, textCoords.y);
+                isTypingText = false;
+                textValue = "";
+                shadowCtx.fillStyle = shadowColor;
+            } else {
+                textCoords = { x, y };
+                shadowCtx.fillStyle = brushColor;
+                isTypingText = true;
+            }
+        } else if (mode === "eyedropper") {
+            const rgb = drawCtx.getImageData(x, y, 1, 1).data;
+            colorPicker.value = rgbToHex(rgb[0], rgb[1], rgb[2]);
+        } else if (mode === "square") {
+            shadowCtx.strokeStyle = brushColor;
+        } else if (mode === "circle" || mode === "line") {
+            shadowCtx.fillStyle = brushColor;
+        } else if (mode === "fill") {
+            floodFill(drawCanvas, drawCtx, x, y, toRGBA(brushColor));
+        }
     }
 
     pathStart = { x, y };
     draw(x, y, pixelSize, pixelSize);
     isMouseDown = true;
-});
+}
 
-function componentToHex(c) {
-    const hex = c.toString(16);
-    return ("0" + hex).slice(-2);
-};
+shadowCanvas.addEventListener("mouseup", handleMouseUp);
 
-function rgbToHex(r, g, b) {
-    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-};
-
-shadowCanvas.addEventListener("mouseup", (e) => {
+function handleMouseUp(e) {
     isMouseDown = false;
 
-    if (e.button === 2) {
-        mode === "pencil";
-        pencilOn();
-    }
     if (mode === "square") {
         clear(shadowCtx);
         drawCtx.strokeRect(
@@ -226,9 +223,22 @@ shadowCanvas.addEventListener("mouseup", (e) => {
         drawPixelatedLine(drawCtx, pathStart.x, pathStart.y, x, y, pixelSize);
         shadowCtx.fillStyle = shadowColor;
     } else if (mode === "eyedropper") {
-        pencilOn();
+        activateMode("pencil");
     }
-});
+
+    if (e.button === 2) {
+        activateMode(prevMode);
+    }
+}
+
+function componentToHex(c) {
+    const hex = c.toString(16);
+    return ("0" + hex).slice(-2);
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
 
 window.addEventListener("keydown", (e) => {
     if (isTypingText) {
@@ -249,63 +259,50 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
-eraserButton.addEventListener("click", eraserOn);
-
-function eraserOn() {
-    mode = "eraser";
-    pencilButton.style.backgroundColor = "white";
-    eraserButton.style.backgroundColor = activeButtonColor;
-    squareShapeButton.style.backgroundColor = "white";
-    drawTextButton.style.backgroundColor = "white";
-    lineButton.style.backgroundColor = "white";
-    eyedropperButton.style.backgroundColor = "white";
+function activateMode(modeName) {
+    prevMode = mode;
+    mode = modeName;
+    currentElem.style.backgroundColor = "white";
+    currentElem = elemByMode(mode);
+    currentElem.style.backgroundColor = activeButtonColor;
 }
 
-pencilButton.addEventListener("click", (e) => pencilOn());
-
-squareShapeButton.addEventListener("click", () => {
-    mode = "square";
-    pencilButton.style.backgroundColor = "white";
-    eraserButton.style.backgroundColor = "white";
-    squareShapeButton.style.backgroundColor = activeButtonColor;
-    circleShapeButton.style.backgroundColor = "white";
-    drawTextButton.style.backgroundColor = "white";
-    lineButton.style.backgroundColor = "white";
-    eyedropperButton.style.backgroundColor = "white";
-});
-
-circleShapeButton.addEventListener("click", () => {
-    mode = "circle";
-    pencilButton.style.backgroundColor = "white";
-    eraserButton.style.backgroundColor = "white";
-    squareShapeButton.style.backgroundColor = "white";
-    circleShapeButton.style.backgroundColor = activeButtonColor;
-    drawTextButton.style.backgroundColor = "white";
-    lineButton.style.backgroundColor = "white";
-    eyedropperButton.style.backgroundColor = "white";
-});
-
-drawTextButton.addEventListener("click", () => {
-    mode = "text";
-    pencilButton.style.backgroundColor = "white";
-    eraserButton.style.backgroundColor = "white";
-    squareShapeButton.style.backgroundColor = "white";
-    circleShapeButton.style.backgroundColor = "white";
-    drawTextButton.style.backgroundColor = activeButtonColor;
-    lineButton.style.backgroundColor = "white";
-    eyedropperButton.style.backgroundColor = "white";
-});
-
-function pencilOn() {
-    mode = "pencil";
-    pencilButton.style.backgroundColor = activeButtonColor;
-    eraserButton.style.backgroundColor = "white";
-    squareShapeButton.style.backgroundColor = "white";
-    circleShapeButton.style.backgroundColor = "white";
-    drawTextButton.style.backgroundColor = "white";
-    lineButton.style.backgroundColor = "white";
-    eyedropperButton.style.backgroundColor = "white";
+function elemByMode(mode) {
+    switch (mode) {
+        case "pencil":
+            return pencilButton;
+        case "eraser":
+            return eraserButton;
+        case "line":
+            return lineButton;
+        case "square":
+            return squareShapeButton;
+        case "circle":
+            return circleShapeButton;
+        case "text":
+            return drawTextButton;
+        case "eyedropper":
+            return eyedropperButton;
+        case "fill":
+            return fillButton;
+    }
 }
+
+pencilButton.addEventListener("click", () => activateMode("pencil"));
+
+eraserButton.addEventListener("click", () => activateMode("eraser"));
+
+lineButton.addEventListener("click", () => activateMode("line"));
+
+squareShapeButton.addEventListener("click", () => activateMode("square"));
+
+circleShapeButton.addEventListener("click", () => activateMode("circle"));
+
+drawTextButton.addEventListener("click", () => activateMode("text"));
+
+eyedropperButton.addEventListener("click", () => activateMode("eyedropper"));
+
+fillButton.addEventListener("click", () => activateMode("fill"));
 
 function setLineWidth() {
     drawCtx.lineWidth = pixelSize * brushSize;
@@ -446,7 +443,6 @@ function handleUndo() {
 function handleRedo() {
     if (redoStack.length > 0) {
         updateUndo();
-        console.log("b");
         const nextCanvas = redoStack.pop();
         canvasImage.src = nextCanvas;
     }
@@ -459,17 +455,6 @@ function updateUndo() {
 canvasImage.addEventListener("load", () => {
     clear(drawCtx);
     drawCtx.drawImage(canvasImage, 0, 0, canvasSize, canvasSize);
-});
-
-lineButton.addEventListener("click", () => {
-    mode = "line";
-    pencilButton.style.backgroundColor = "white";
-    eraserButton.style.backgroundColor = "white";
-    squareShapeButton.style.backgroundColor = "white";
-    circleShapeButton.style.backgroundColor = "white";
-    drawTextButton.style.backgroundColor = "white";
-    lineButton.style.backgroundColor = activeButtonColor;
-    eyedropperButton.style.backgroundColor = "white";
 });
 
 function drawPixelatedLine(ctx, x1, y1, x2, y2, pixelSize) {
@@ -500,15 +485,95 @@ function drawPixelatedLine(ctx, x1, y1, x2, y2, pixelSize) {
     }
 }
 
-eyedropperButton.addEventListener("click", () => handleEyedropper());
+function toRGBA(color) {
+    var bigint = parseInt(color.slice(1), 16);
+    var r = (bigint >> 16) & 255;
+    var g = (bigint >> 8) & 255;
+    var b = bigint & 255;
+    return { r: r, g: g, b: b, a: 255 };
+}
 
-function handleEyedropper() {
-    mode = "eyedropper";
-    pencilButton.style.backgroundColor = "white";
-    eraserButton.style.backgroundColor = "white";
-    squareShapeButton.style.backgroundColor = "white";
-    circleShapeButton.style.backgroundColor = "white";
-    drawTextButton.style.backgroundColor = "white";
-    lineButton.style.backgroundColor = "white";
-    eyedropperButton.style.backgroundColor = activeButtonColor;
+function floodFill(canvas, ctx, x, y, color) {
+    pixelStack = [{ x: x, y: y }];
+    pixels = ctx.getImageData(0, 0, canvasSize, canvasSize);
+    var linearCoords = (y * canvasSize + x) * 4;
+    prevColor = {
+        r: pixels.data[linearCoords],
+        g: pixels.data[linearCoords + 1],
+        b: pixels.data[linearCoords + 2],
+        a: pixels.data[linearCoords + 3],
+    };
+
+    let k = 1000;
+
+    while (pixelStack.length > 0 && k > 0) {
+        newPixel = pixelStack.shift();
+        x = newPixel.x;
+        y = newPixel.y;
+
+        linearCoords = (y * canvasSize + x) * 4;
+        while (
+            y-- >= 0 &&
+            pixels.data[linearCoords] == prevColor.r &&
+            pixels.data[linearCoords + 1] == prevColor.g &&
+            pixels.data[linearCoords + 2] == prevColor.b &&
+            pixels.data[linearCoords + 3] == prevColor.a
+        ) {
+            linearCoords -= canvasSize * 4;
+        }
+        linearCoords += canvasSize * 4;
+        y++;
+
+        var isReachedLeft = false;
+        var isReachedRight = false;
+        while (
+            y++ < canvas.height &&
+            pixels.data[linearCoords] == prevColor.r &&
+            pixels.data[linearCoords + 1] == prevColor.g &&
+            pixels.data[linearCoords + 2] == prevColor.b &&
+            pixels.data[linearCoords + 3] == prevColor.a
+        ) {
+            pixels.data[linearCoords] = color.r;
+            pixels.data[linearCoords + 1] = color.g;
+            pixels.data[linearCoords + 2] = color.b;
+            pixels.data[linearCoords + 3] = color.a;
+
+            if (x > 0) {
+                if (
+                    pixels.data[linearCoords - 4] == prevColor.r &&
+                    pixels.data[linearCoords - 4 + 1] == prevColor.g &&
+                    pixels.data[linearCoords - 4 + 2] == prevColor.b &&
+                    pixels.data[linearCoords - 4 + 3] == prevColor.a
+                ) {
+                    if (!isReachedLeft) {
+                        pixelStack.push({ x: x - 1, y: y });
+                        isReachedLeft = true;
+                    }
+                } else if (isReachedLeft) {
+                    isReachedLeft = false;
+                }
+            }
+
+            if (x < canvasSize - 1) {
+                if (
+                    pixels.data[linearCoords + 4] == prevColor.r &&
+                    pixels.data[linearCoords + 4 + 1] == prevColor.g &&
+                    pixels.data[linearCoords + 4 + 2] == prevColor.b &&
+                    pixels.data[linearCoords + 4 + 3] == prevColor.a
+                ) {
+                    if (!isReachedRight) {
+                        pixelStack.push({ x: x + 1, y: y });
+                        isReachedRight = true;
+                    }
+                } else if (isReachedRight) {
+                    isReachedRight = false;
+                }
+            }
+
+            linearCoords += canvasSize * 4;
+        }
+        k--;
+    }
+
+    ctx.putImageData(pixels, 0, 0);
 }
