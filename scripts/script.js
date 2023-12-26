@@ -2,6 +2,7 @@ window.oncontextmenu = () => false; // cancel default menu
 
 const bgCanvas = document.querySelector(".background-canvas");
 const drawCanvas = document.querySelector(".drawing-canvas");
+const selectCanvas = document.querySelector(".select-canvas");
 const shadowCanvas = document.querySelector(".shadow-canvas");
 const pencilButton = document.querySelector(".pencil-button");
 const eraserButton = document.querySelector(".eraser-button");
@@ -30,6 +31,9 @@ const redoButton = document.querySelector(".redo-button");
 const lineButton = document.querySelector(".line-button");
 const eyedropperButton = document.querySelector(".eyedropper-button");
 const fillButton = document.querySelector(".fill-button");
+const selectButton = document.querySelector(".select-button");
+const selectedArea = document.querySelector(".selected-area");
+const canvasContainer = document.querySelector(".canvas-container");
 
 const canvasSize = 600;
 
@@ -45,20 +49,25 @@ function setCanvasSize(canvas, canvasSize) {
 
 setCanvasSize(bgCanvas, canvasSize);
 setCanvasSize(drawCanvas, canvasSize);
+setCanvasSize(selectCanvas, canvasSize);
 setCanvasSize(shadowCanvas, canvasSize);
 
 const bgCtx = bgCanvas.getContext("2d");
 const drawCtx = drawCanvas.getContext("2d");
+const selectCtx = selectCanvas.getContext("2d");
 const shadowCtx = shadowCanvas.getContext("2d");
 
 bgCtx.fillStyle = "#E6E6E6";
+
+selectCtx.setLineDash([5, 3]);
+selectCtx.fillStyle = "#000000";
+let isSelectedMoving = false;
 
 let pixelCount;
 updateCanvasSize();
 let pixelSize;
 setCanvas();
 
-setLineWidth();
 updateBrushSize();
 
 let fontSize;
@@ -72,17 +81,23 @@ let currentElem = pencilButton;
 activateMode("pencil");
 shadowCtx.fillStyle = shadowColor;
 
+let selectWidth, selectHeight, selectTop, selectLeft;
+
 let x, y;
 let textCoords = { x, y };
 let pathStart = { x, y };
+let selectStart = { x, y };
 
 const undoStack = [drawCanvas.toDataURL()];
 let redoStack = [];
 const canvasImage = new Image();
 
-shadowCanvas.addEventListener("mousemove", (e) => {
+canvasContainer.addEventListener("mousemove", (e) => {
     if (
-        (mode === "pencil" || mode === "eraser" || !isMouseDown) &&
+        (mode === "pencil" ||
+            mode === "eraser" ||
+            mode === "select" ||
+            !isMouseDown) &&
         !isTypingText
     ) {
         clear(shadowCtx);
@@ -148,6 +163,61 @@ function draw(x, y, pixelSize, pixelSize) {
             Math.max(x - pathStart.x, y - pathStart.y),
             pixelSize * brushSize
         );
+    } else if (mode === "line") {
+        clear(shadowCtx);
+
+        drawPixelatedLine(shadowCtx, pathStart.x, pathStart.y, x, y, pixelSize);
+    } else if (mode === "select") {
+        clear(selectCtx);
+
+        const width = x - pathStart.x;
+        const height = y - pathStart.y;
+
+        if (width >= 0) {
+            if (height >= 0) {
+                selectCtx.strokeRect(
+                    pathStart.x,
+                    pathStart.y,
+                    width + pixelSize,
+                    height + pixelSize
+                );
+                selectHeight = Math.abs(height + pixelSize);
+                selectTop = pathStart.y;
+            } else {
+                selectCtx.strokeRect(
+                    pathStart.x,
+                    pathStart.y + pixelSize,
+                    width + pixelSize,
+                    height - pixelSize
+                );
+                selectHeight = Math.abs(height - pixelSize);
+                selectTop = pathStart.y + pixelSize - selectHeight;
+            }
+            selectLeft = pathStart.x;
+            selectWidth = Math.abs(width + pixelSize);
+        } else {
+            if (height >= 0) {
+                selectCtx.strokeRect(
+                    pathStart.x + pixelSize,
+                    pathStart.y,
+                    width - pixelSize,
+                    height + pixelSize
+                );
+                selectHeight = Math.abs(height + pixelSize);
+                selectTop = pathStart.y;
+            } else {
+                selectCtx.strokeRect(
+                    pathStart.x + pixelSize,
+                    pathStart.y + pixelSize,
+                    width - pixelSize,
+                    height - pixelSize
+                );
+                selectHeight = Math.abs(height - pixelSize);
+                selectTop = pathStart.y + pixelSize - selectHeight;
+            }
+            selectLeft = pathStart.x - Math.abs(width);
+            selectWidth = Math.abs(width - pixelSize);
+        }
     }
 }
 
@@ -224,8 +294,13 @@ function handleMouseUp(e) {
         shadowCtx.fillStyle = shadowColor;
     } else if (mode === "eyedropper") {
         activateMode("pencil");
+    } else if (mode === "select") {
+        selectedArea.style.display = "block";
+        selectedArea.style.top = selectTop + "px";
+        selectedArea.style.left = selectLeft + "px";
+        selectedArea.style.width = selectWidth + "px";
+        selectedArea.style.height = selectHeight + "px";
     }
-
     if (e.button === 2) {
         activateMode(prevMode);
     }
@@ -285,6 +360,8 @@ function elemByMode(mode) {
             return eyedropperButton;
         case "fill":
             return fillButton;
+        case "select":
+            return selectButton;
     }
 }
 
@@ -304,9 +381,11 @@ eyedropperButton.addEventListener("click", () => activateMode("eyedropper"));
 
 fillButton.addEventListener("click", () => activateMode("fill"));
 
-function setLineWidth() {
-    drawCtx.lineWidth = pixelSize * brushSize;
-    shadowCtx.lineWidth = pixelSize * brushSize;
+selectButton.addEventListener("click", () => activateMode("select"));
+
+function setLineWidth(width) {
+    drawCtx.lineWidth = width;
+    shadowCtx.lineWidth = width;
 }
 
 colorPicker.addEventListener("change", () => {
@@ -349,7 +428,7 @@ canvasRange.addEventListener("input", updateCanvasSize);
 function updateBrushSize() {
     brushSize = brushRange.value;
     brushSizeLabel.textContent = brushSize;
-    setLineWidth();
+    setLineWidth(pixelSize * brushSize);
 }
 
 function updateFontSize() {
@@ -574,3 +653,41 @@ function floodFill(canvas, ctx, x, y, color) {
 
     ctx.putImageData(pixels, 0, 0);
 }
+
+selectedArea.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+    isSelectedMoving = true;
+    selectStart = { x, y };
+});
+
+selectedArea.addEventListener("mouseup", () => {
+    isSelectedMoving = false;
+});
+
+canvasContainer.addEventListener("mousemove", () => {
+    if (isSelectedMoving) {
+        selectedArea.style.top =
+            parseInt(selectedArea.style.top) + y - selectStart.y + "px";
+        selectedArea.style.left =
+            parseInt(selectedArea.style.left) + x - selectStart.x + "px";
+        clear(selectCtx);
+        selectCtx.strokeRect(
+            parseInt(selectedArea.style.left),
+            parseInt(selectedArea.style.top),
+            selectWidth,
+            selectHeight
+        );
+
+        console.log(
+            selectedArea.style.left,
+            selectedArea.style.top,
+            selectedArea.style.width,
+            selectedArea.style.height
+        );
+    }
+});
+
+window.addEventListener("mousedown", (e) => {
+    clear(selectCtx);
+    selectedArea.style.display = "none";
+});

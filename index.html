@@ -22,25 +22,30 @@
                 <div class="sidebar">
                     <label class="range-container"><span>Brush size:<br><span class="brush-size"></span></span><input class="brush-range" type="range" min="1" max="10" step="1" value="1"></label>
                     <label class="range-container"><span>Font size:<br><span class="font-size"></span></span><input class="font-range" type="range" min="5" max="20" step="5" value="5"></label>
-                    <button class="pencil-button">Pencil</button>
-                    <button class="line-button">Line</button>
-                    <button class="fill-button">Fill</button>
-                    <button class="square-shape-button">Square</button>
-                    <button class="circle-shape-button">Circle</button>
-                    <button class="draw-text-button">Text</button>
-                    <input type="color" class="color-picker">
-                    <button class="eyedropper-button">Eyedropper</button>
-                    <button class="eraser-button">Eraser</button>
+                    <div class="button-group">
+                        <button class="pencil-button">Pencil</button>
+                        <button class="line-button">Line</button>
+                        <button class="fill-button">Fill</button>
+                        <button class="square-shape-button">Square</button>
+                        <button class="circle-shape-button">Circle</button>
+                        <button class="draw-text-button">Text</button>
+                        <input type="color" class="color-picker">
+                        <button class="eyedropper-button">Eyedropper</button>
+                        <button class="eraser-button">Eraser</button>
+                        <button class="select-button">Select</button>
+                    </div>
                 </div>
                 <div class="canvas-container">
                     <canvas class="background-canvas"></canvas>
                     <canvas class="drawing-canvas layer"></canvas>
+                    <canvas class="select-canvas layer"></canvas>
                     <canvas class="shadow-canvas layer"></canvas>
+                    <div class="selected-area"></div>
                 </div>
             </main>
             <div class="popup-container">
                 <div class="new-file-popup">
-                    <label class="range-container"><span>Canvas size:<br><span class="canvas-size"></span></span><input class="canvas-range" type="range" min="10" max="200" step="10" value="20"></label>
+                    <label class="range-container"><span>Canvas size:<br><span class="canvas-size"></span></span><input class="canvas-range" type="range" min="10" max="200" step="10" value="10"></label>
                     <button class="draw-new-button">New Drawing</button>
                     <button class="close-popup">X</button>
                 </div>

@@ -20,7 +20,8 @@ body {
     padding: 10px;
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: center;
+    gap: 20px;
     border: 1px solid black;
     border-radius: 10px;
 }
@@ -74,7 +75,7 @@ canvas {
     border: 1px solid black;
 }
 
-canvas[class*="layer"] {
+canvas.layer {
     top:0;
     left: 0;
     position: absolute;
@@ -139,4 +140,18 @@ canvas[class*="layer"] {
     flex-direction: column;
     gap: 10px;
     align-items: center;
+}
+
+.button-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 5px;
+}
+
+.selected-area {
+    display: none;
+    position: absolute;
+    cursor: move;
+    top:0;
+    left:0;
 }
