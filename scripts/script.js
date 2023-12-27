@@ -41,7 +41,7 @@ const pasteSelectedButton = document.querySelector(".select-btn.paste");
 const canvasSize = 600;
 
 const activeButtonColor = "rgba(0, 127, 0, 0.7)";
-const shadowColor = "rgba(127, 127, 127, 0.4)";
+const shadowColor = "rgba(127, 127, 127, 0.5)";
 let brushColor = "#000000";
 let brushSize = 1;
 
@@ -95,6 +95,9 @@ const canvasImage = new Image();
 let selectedBuffer;
 let copyBuffer;
 const keysPressed = {};
+let isTextCursorOn = false;
+let textCursorInterval;
+shadowCtx.fillText(textValue, 0, 0);
 
 canvasContainer.addEventListener("mousemove", (e) => {
     if (
@@ -262,6 +265,7 @@ function handleMouseDown(e) {
     if (e.button === 0) {
         if (mode === "text") {
             if (isTypingText) {
+                removeTextCursor();
                 drawCtx.fillText(textValue, textCoords.x, textCoords.y);
                 isTypingText = false;
                 textValue = "";
@@ -270,6 +274,7 @@ function handleMouseDown(e) {
                 textCoords = { x, y };
                 shadowCtx.fillStyle = brushColor;
                 isTypingText = true;
+                setTextCursor();
             }
         } else if (mode === "eyedropper") {
             const rgb = drawCtx.getImageData(x, y, 1, 1).data;
@@ -346,13 +351,17 @@ window.addEventListener("keydown", (e) => {
     keysPressed[e.key] = true;
     if (isTypingText) {
         if (e.key.length === 1 || e.key === "Space") {
+            removeTextCursor();
             clear(shadowCtx);
             textValue += e.key.toUpperCase();
             shadowCtx.fillText(textValue, textCoords.x, textCoords.y);
+            setTextCursor();
         } else if (e.key === "Backspace") {
+            removeTextCursor();
             clear(shadowCtx);
             textValue = textValue.slice(0, -1);
             shadowCtx.fillText(textValue, textCoords.x, textCoords.y);
+            setTextCursor();
         } else if (e.key === "Enter" || e.key === "Escape") {
             drawCtx.fillText(textValue, textCoords.x, textCoords.y);
             isTypingText = false;
@@ -757,4 +766,34 @@ function handleCut() {
 
 function handlePaste() {
     drawCtx.putImageData(copyBuffer, selectLeft, selectTop);
+}
+
+function setTextCursor() {
+    shadowCtx.fillStyle = shadowColor;
+    textCursorInterval = setInterval(() => {
+        let cursorX = textCoords.x + Math.round(shadowCtx.measureText(textValue).width);
+
+        if (isTextCursorOn) {
+            shadowCtx.clearRect(
+                cursorX,
+                textCoords.y,
+                pixelSize,
+                -pixelSize * fontSize
+            );
+            isTextCursorOn = false;
+        } else {
+            shadowCtx.fillRect(
+                cursorX,
+                textCoords.y,
+                pixelSize,
+                -pixelSize * fontSize
+            );
+            isTextCursorOn = true;
+        }
+    }, 500);
+}
+
+function removeTextCursor() {
+    clearInterval(textCursorInterval);
+    shadowCtx.fillStyle = brushColor;
 }
