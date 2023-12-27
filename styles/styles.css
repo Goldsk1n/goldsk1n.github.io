@@ -6,8 +6,11 @@
 
 @font-face {
     font-family: "Pixel5x5";
-    src: url("../fonts/pixel-font-5x5.ttf");
-    font-display:block;
+    src: url("../fonts/pixel-font-5x5-webfont.woff2") format("woff2"),
+        url("../fonts/pixel-font-5x5-webfont.woff") format("woff");
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
 }
 
 body {
@@ -76,11 +79,11 @@ canvas {
 }
 
 canvas.layer {
-    top:0;
+    top: 0;
     left: 0;
     position: absolute;
     font-smooth: never;
-    -webkit-font-smoothing : none;
+    -webkit-font-smoothing: none;
 }
 
 .popup-container {
@@ -90,12 +93,13 @@ canvas.layer {
     height: 100%;
     left: 0;
     top: 0;
-    background-color: rgba(0,0,0,0.2);
+    background-color: rgba(0, 0, 0, 0.2);
     justify-content: center;
     align-items: center;
 }
 
-.new-file-popup, .save-popup {
+.new-file-popup,
+.save-popup {
     display: none;
     padding: 30px;
     position: absolute;
@@ -103,8 +107,8 @@ canvas.layer {
 }
 
 .close-popup {
-    background-color: rgba(0,0,0,0);
-    color: #CCCCCC;
+    background-color: rgba(0, 0, 0, 0);
+    color: #cccccc;
     border: 0;
     position: absolute;
     right: 0;
@@ -136,7 +140,7 @@ canvas.layer {
 }
 
 .new-file-popup {
-    color: #CCCCCC;
+    color: #cccccc;
     flex-direction: column;
     gap: 10px;
     align-items: center;
@@ -152,6 +156,6 @@ canvas.layer {
     display: none;
     position: absolute;
     cursor: move;
-    top:0;
-    left:0;
+    top: 0;
+    left: 0;
 }
