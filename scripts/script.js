@@ -64,6 +64,7 @@ bgCtx.fillStyle = "#E6E6E6";
 
 selectCtx.setLineDash([5, 3]);
 selectCtx.fillStyle = "#000000";
+let isAboveSelectedArea = false;
 let isSelectedMoving = false;
 
 let pixelCount;
@@ -95,26 +96,22 @@ const undoStack = [drawCanvas.toDataURL()];
 let redoStack = [];
 const canvasImage = new Image();
 
+let selectedBuffer;
 let copyBuffer;
 const keysPressed = {};
 
 canvasContainer.addEventListener("mousemove", (e) => {
     if (
-        (mode === "pencil" ||
-            mode === "eraser" ||
-            mode === "select" ||
-            !isMouseDown) &&
+        (mode === "pencil" || mode === "eraser" || !isMouseDown) &&
         !isTypingText
     ) {
-        clear(shadowCtx);
-        shadowCtx.fillRect(
-            pixelSize *
-                Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
-            pixelSize *
-                Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
-            pixelSize * brushSize,
-            pixelSize * brushSize
-        );
+        
+        if (!isAboveSelectedArea) {
+            clear(shadowCtx);
+            shadowCtx.fillRect(pixelSize *
+                Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize), pixelSize *
+                Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize), pixelSize * brushSize, pixelSize * brushSize);
+        }
     }
 
     if (isMouseDown) {
@@ -125,6 +122,12 @@ canvasContainer.addEventListener("mousemove", (e) => {
     y = pixelSize * roundToPixel(e.offsetY);
 
     if (isSelectedMoving) {
+        drawCtx.clearRect(
+            parseInt(selectedArea.style.left),
+            parseInt(selectedArea.style.top),
+            selectWidth,
+            selectHeight
+        );
         selectedArea.style.top =
             parseInt(selectedArea.style.top) + y - selectStart.y + "px";
         selectedArea.style.left =
@@ -135,6 +138,11 @@ canvasContainer.addEventListener("mousemove", (e) => {
             parseInt(selectedArea.style.top),
             selectWidth,
             selectHeight
+        );
+        drawCtx.putImageData(
+            selectedBuffer,
+            parseInt(selectedArea.style.left),
+            parseInt(selectedArea.style.top)
         );
     }
 });
@@ -314,7 +322,7 @@ function handleMouseUp(e) {
         mode === "select" &&
         (selectWidth > pixelSize || selectHeight > pixelSize)
     ) {
-        selectedArea.style.display = "flex";
+        selectedArea.style.display = "block";
         selectedArea.style.top = selectTop + "px";
         selectedArea.style.left = selectLeft + "px";
         selectedArea.style.width = selectWidth + "px";
@@ -690,6 +698,21 @@ selectedArea.addEventListener("mousedown", (e) => {
     e.stopPropagation();
     isSelectedMoving = true;
     selectStart = { x, y };
+    selectedBuffer = drawCtx.getImageData(
+        selectLeft,
+        selectTop,
+        selectWidth,
+        selectHeight
+    );
+    console.log("a");
+});
+
+selectedArea.addEventListener("mouseover", () => {
+    isAboveSelectedArea = true;
+});
+
+selectedArea.addEventListener("mouseout", () => {
+    isAboveSelectedArea = false;
 });
 
 selectedArea.addEventListener("mouseup", () => {

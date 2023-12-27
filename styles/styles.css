@@ -163,10 +163,16 @@ canvas.layer {
     cursor: move;
     top: 0;
     left: 0;
+}
+
+.select-btn-container {
+    height: inherit;
+    display: flex;
     flex-direction: column;
+    margin-left: -60px;
+    width: 60px;
 }
 
 .select-btn {
-    width: 80px;
-    margin-left: -80px;
+    font-size: 0.8rem;
 }
