@@ -70,12 +70,8 @@ let isSelectedMoving = false;
 let pixelCount;
 updateCanvasSize();
 let pixelSize;
-setCanvas();
-
-updateBrushSize();
-
 let fontSize;
-updateFontSize();
+setCanvas();
 
 let isMouseDown = false;
 let isTypingText = false;
@@ -105,12 +101,16 @@ canvasContainer.addEventListener("mousemove", (e) => {
         (mode === "pencil" || mode === "eraser" || !isMouseDown) &&
         !isTypingText
     ) {
-        
         if (!isAboveSelectedArea) {
             clear(shadowCtx);
-            shadowCtx.fillRect(pixelSize *
-                Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize), pixelSize *
-                Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize), pixelSize * brushSize, pixelSize * brushSize);
+            shadowCtx.fillRect(
+                pixelSize *
+                    Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
+                pixelSize *
+                    Math.ceil((y - (pixelSize * brushSize) / 2) / pixelSize),
+                pixelSize * brushSize,
+                pixelSize * brushSize
+            );
         }
     }
 
@@ -546,6 +546,9 @@ function setCanvas() {
             bgCtx.fillRect(i * pixelSize, j * pixelSize, pixelSize, pixelSize);
         }
     }
+
+    updateBrushSize();
+    updateFontSize();
 }
 
 undoButton.addEventListener("click", handleUndo);
@@ -622,6 +625,15 @@ function floodFill(canvas, ctx, x, y, color) {
         b: pixels.data[linearCoords + 2],
         a: pixels.data[linearCoords + 3],
     };
+
+    if (
+        prevColor.r == color.r &&
+        prevColor.g == color.g &&
+        prevColor.b == color.b &&
+        prevColor.a == color.a
+    ) {
+        return;
+    }
 
     while (pixelStack.length > 0) {
         newPixel = pixelStack.shift();
@@ -704,7 +716,6 @@ selectedArea.addEventListener("mousedown", (e) => {
         selectWidth,
         selectHeight
     );
-    console.log("a");
 });
 
 selectedArea.addEventListener("mouseover", () => {
