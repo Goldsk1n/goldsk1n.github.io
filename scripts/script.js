@@ -34,6 +34,9 @@ const fillButton = document.querySelector(".fill-button");
 const selectButton = document.querySelector(".select-button");
 const selectedArea = document.querySelector(".selected-area");
 const canvasContainer = document.querySelector(".canvas-container");
+const copySelectedButton = document.querySelector(".select-btn.copy");
+const cutSelectedButton = document.querySelector(".select-btn.cut");
+const pasteSelectedButton = document.querySelector(".select-btn.paste");
 
 const canvasSize = 600;
 
@@ -92,6 +95,9 @@ const undoStack = [drawCanvas.toDataURL()];
 let redoStack = [];
 const canvasImage = new Image();
 
+let copyBuffer;
+const keysPressed = {};
+
 canvasContainer.addEventListener("mousemove", (e) => {
     if (
         (mode === "pencil" ||
@@ -117,6 +123,20 @@ canvasContainer.addEventListener("mousemove", (e) => {
 
     x = pixelSize * roundToPixel(e.offsetX);
     y = pixelSize * roundToPixel(e.offsetY);
+
+    if (isSelectedMoving) {
+        selectedArea.style.top =
+            parseInt(selectedArea.style.top) + y - selectStart.y + "px";
+        selectedArea.style.left =
+            parseInt(selectedArea.style.left) + x - selectStart.x + "px";
+        clear(selectCtx);
+        selectCtx.strokeRect(
+            parseInt(selectedArea.style.left),
+            parseInt(selectedArea.style.top),
+            selectWidth,
+            selectHeight
+        );
+    }
 });
 
 shadowCanvas.addEventListener("mouseout", () => {
@@ -173,23 +193,20 @@ function draw(x, y, pixelSize, pixelSize) {
         const width = x - pathStart.x;
         const height = y - pathStart.y;
 
+        let localX, localY, localW, localH;
         if (width >= 0) {
             if (height >= 0) {
-                selectCtx.strokeRect(
-                    pathStart.x,
-                    pathStart.y,
-                    width + pixelSize,
-                    height + pixelSize
-                );
+                localX = pathStart.x;
+                localY = pathStart.y;
+                localW = width + pixelSize;
+                localH = height + pixelSize;
                 selectHeight = Math.abs(height + pixelSize);
                 selectTop = pathStart.y;
             } else {
-                selectCtx.strokeRect(
-                    pathStart.x,
-                    pathStart.y + pixelSize,
-                    width + pixelSize,
-                    height - pixelSize
-                );
+                localX = pathStart.x;
+                localY = pathStart.y + pixelSize;
+                localW = width + pixelSize;
+                localH = height - pixelSize;
                 selectHeight = Math.abs(height - pixelSize);
                 selectTop = pathStart.y + pixelSize - selectHeight;
             }
@@ -197,26 +214,25 @@ function draw(x, y, pixelSize, pixelSize) {
             selectWidth = Math.abs(width + pixelSize);
         } else {
             if (height >= 0) {
-                selectCtx.strokeRect(
-                    pathStart.x + pixelSize,
-                    pathStart.y,
-                    width - pixelSize,
-                    height + pixelSize
-                );
+                localX = pathStart.x + pixelSize;
+                localY = pathStart.y;
+                localW = width - pixelSize;
+                localH = height + pixelSize;
                 selectHeight = Math.abs(height + pixelSize);
                 selectTop = pathStart.y;
             } else {
-                selectCtx.strokeRect(
-                    pathStart.x + pixelSize,
-                    pathStart.y + pixelSize,
-                    width - pixelSize,
-                    height - pixelSize
-                );
+                localX = pathStart.x + pixelSize;
+                localY = pathStart.y + pixelSize;
+                localW = width - pixelSize;
+                localH = height - pixelSize;
                 selectHeight = Math.abs(height - pixelSize);
                 selectTop = pathStart.y + pixelSize - selectHeight;
             }
             selectLeft = pathStart.x - Math.abs(width);
             selectWidth = Math.abs(width - pixelSize);
+        }
+        if (selectWidth > pixelSize || selectHeight > pixelSize) {
+            selectCtx.strokeRect(localX, localY, localW, localH);
         }
     }
 }
@@ -294,8 +310,11 @@ function handleMouseUp(e) {
         shadowCtx.fillStyle = shadowColor;
     } else if (mode === "eyedropper") {
         activateMode("pencil");
-    } else if (mode === "select") {
-        selectedArea.style.display = "block";
+    } else if (
+        mode === "select" &&
+        (selectWidth > pixelSize || selectHeight > pixelSize)
+    ) {
+        selectedArea.style.display = "flex";
         selectedArea.style.top = selectTop + "px";
         selectedArea.style.left = selectLeft + "px";
         selectedArea.style.width = selectWidth + "px";
@@ -316,6 +335,7 @@ function rgbToHex(r, g, b) {
 }
 
 window.addEventListener("keydown", (e) => {
+    keysPressed[e.key] = true;
     if (isTypingText) {
         if (e.key.length === 1 || e.key === "Space") {
             clear(shadowCtx);
@@ -331,7 +351,19 @@ window.addEventListener("keydown", (e) => {
             textValue = "";
             shadowCtx.fillStyle = shadowColor;
         }
+    } else if (keysPressed["Control"]) {
+        if (keysPressed["c"]) {
+            handleCopy();
+        } else if (keysPressed["x"]) {
+            handleCut();
+        } else if (keysPressed["v"]) {
+            handlePaste();
+        }
     }
+});
+
+window.addEventListener("keyup", (e) => {
+    delete keysPressed[e.key];
 });
 
 function activateMode(modeName) {
@@ -664,30 +696,31 @@ selectedArea.addEventListener("mouseup", () => {
     isSelectedMoving = false;
 });
 
-canvasContainer.addEventListener("mousemove", () => {
-    if (isSelectedMoving) {
-        selectedArea.style.top =
-            parseInt(selectedArea.style.top) + y - selectStart.y + "px";
-        selectedArea.style.left =
-            parseInt(selectedArea.style.left) + x - selectStart.x + "px";
-        clear(selectCtx);
-        selectCtx.strokeRect(
-            parseInt(selectedArea.style.left),
-            parseInt(selectedArea.style.top),
-            selectWidth,
-            selectHeight
-        );
-
-        console.log(
-            selectedArea.style.left,
-            selectedArea.style.top,
-            selectedArea.style.width,
-            selectedArea.style.height
-        );
-    }
-});
-
 window.addEventListener("mousedown", (e) => {
     clear(selectCtx);
     selectedArea.style.display = "none";
 });
+
+copySelectedButton.addEventListener("click", handleCopy);
+
+cutSelectedButton.addEventListener("click", handleCut);
+
+pasteSelectedButton.addEventListener("click", handlePaste);
+
+function handleCopy() {
+    copyBuffer = drawCtx.getImageData(
+        selectLeft,
+        selectTop,
+        selectWidth,
+        selectHeight
+    );
+}
+
+function handleCut() {
+    handleCopy();
+    drawCtx.clearRect(selectLeft, selectTop, selectWidth, selectHeight);
+}
+
+function handlePaste() {
+    drawCtx.putImageData(copyBuffer, selectLeft, selectTop);
+}

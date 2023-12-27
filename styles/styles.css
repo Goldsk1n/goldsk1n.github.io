@@ -15,6 +15,11 @@
 
 body {
     font-family: Arial, Helvetica, sans-serif;
+    -webkit-touch-callout: none; /* Safari */
+        -webkit-user-select: none; /* Chrome */     
+           -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+                user-select: none; 
 }
 
 .sidebar {
@@ -158,4 +163,10 @@ canvas.layer {
     cursor: move;
     top: 0;
     left: 0;
+    flex-direction: column;
+}
+
+.select-btn {
+    width: 80px;
+    margin-left: -80px;
 }
