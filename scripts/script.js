@@ -37,6 +37,10 @@ const canvasContainer = document.querySelector(".canvas-container");
 const copySelectedButton = document.querySelector(".select-btn.copy");
 const cutSelectedButton = document.querySelector(".select-btn.cut");
 const pasteSelectedButton = document.querySelector(".select-btn.paste");
+const brushButton = document.querySelector(".brush-button");
+const sprayButton = document.querySelector(".spray-button");
+const sprayRange = document.querySelector(".spray-range");
+const spraySizeLabel = document.querySelector(".spray-size");
 
 const canvasSize = 600;
 
@@ -99,6 +103,10 @@ let isTextCursorOn = false;
 let textCursorInterval;
 shadowCtx.fillText(textValue, 0, 0);
 
+let spraySize;
+updateSpraySize();
+let sprayInterval;
+
 canvasContainer.addEventListener("mousemove", (e) => {
     if (
         (mode === "pencil" || mode === "eraser" || !isMouseDown) &&
@@ -121,8 +129,8 @@ canvasContainer.addEventListener("mousemove", (e) => {
         draw(x, y, pixelSize, pixelSize);
     }
 
-    x = pixelSize * roundToPixel(e.offsetX);
-    y = pixelSize * roundToPixel(e.offsetY);
+    x = roundToPixel(e.offsetX);
+    y = roundToPixel(e.offsetY);
 
     if (isSelectedMoving) {
         drawCtx.clearRect(
@@ -249,7 +257,7 @@ function draw(x, y, pixelSize, pixelSize) {
 }
 
 function roundToPixel(value) {
-    return Math.floor(value / pixelSize);
+    return Math.floor(value / pixelSize) * pixelSize;
 }
 
 shadowCanvas.addEventListener("mousedown", handleMouseDown);
@@ -285,12 +293,27 @@ function handleMouseDown(e) {
             shadowCtx.fillStyle = brushColor;
         } else if (mode === "fill") {
             floodFill(drawCanvas, drawCtx, x, y, toRGBA(brushColor));
+        } else if (mode === "spray") {
+            clear(shadowCtx);
+            sprayInterval = setInterval(drawSpray, 20);
         }
     }
 
     pathStart = { x, y };
     draw(x, y, pixelSize, pixelSize);
     isMouseDown = true;
+}
+
+function drawSpray() {
+    let angle, radius, offset, localX, localY;
+    for (let i = 0; i < 10; i++) {
+        angle = Math.random() * 360;
+        radius = spraySize * pixelSize;
+        offset = Math.random() * radius;
+        localX = roundToPixel(Math.cos(angle) * offset);
+        localY = roundToPixel(Math.sin(angle) * offset);
+        drawCtx.fillRect(x + localX, y + localY, pixelSize, pixelSize);
+    }
 }
 
 shadowCanvas.addEventListener("mouseup", handleMouseUp);
@@ -332,6 +355,8 @@ function handleMouseUp(e) {
         selectedArea.style.left = selectLeft + "px";
         selectedArea.style.width = selectWidth + "px";
         selectedArea.style.height = selectHeight + "px";
+    } else if (mode === "spray") {
+        clearInterval(sprayInterval);
     }
     if (e.button === 2) {
         activateMode(prevMode);
@@ -411,6 +436,8 @@ function elemByMode(mode) {
             return fillButton;
         case "select":
             return selectButton;
+        case "spray":
+            return sprayButton;
     }
 }
 
@@ -431,6 +458,8 @@ eyedropperButton.addEventListener("click", () => activateMode("eyedropper"));
 fillButton.addEventListener("click", () => activateMode("fill"));
 
 selectButton.addEventListener("click", () => activateMode("select"));
+
+sprayButton.addEventListener("click", () => activateMode("spray"));
 
 function setLineWidth(width) {
     drawCtx.lineWidth = width;
@@ -473,6 +502,7 @@ saveFile.addEventListener("click", () => {
 brushRange.addEventListener("input", updateBrushSize);
 fontRange.addEventListener("input", updateFontSize);
 canvasRange.addEventListener("input", updateCanvasSize);
+sprayRange.addEventListener("input", updateSpraySize);
 
 function updateBrushSize() {
     brushSize = brushRange.value;
@@ -485,6 +515,11 @@ function updateFontSize() {
     fontSizeLabel.textContent = fontSize;
     shadowCtx.font = `${fontSize * pixelSize * 2}px Pixel5x5`;
     drawCtx.font = `${fontSize * pixelSize * 2}px Pixel5x5`;
+}
+
+function updateSpraySize() {
+    spraySize = sprayRange.value;
+    spraySizeLabel.textContent = spraySize;
 }
 
 function updateCanvasSize() {
@@ -771,7 +806,8 @@ function handlePaste() {
 function setTextCursor() {
     shadowCtx.fillStyle = shadowColor;
     textCursorInterval = setInterval(() => {
-        let cursorX = textCoords.x + Math.round(shadowCtx.measureText(textValue).width);
+        let cursorX =
+            textCoords.x + Math.round(shadowCtx.measureText(textValue).width);
 
         if (isTextCursorOn) {
             shadowCtx.clearRect(
