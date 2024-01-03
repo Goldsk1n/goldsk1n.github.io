@@ -5,6 +5,7 @@
         <title>GoldsPixel</title>
         <link rel="icon" href="./images/logo.png">
         <link rel="stylesheet" href="./styles/styles.css"></link>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <script defer src="./scripts/script.js"></script>
     </head>
     <body>
@@ -13,10 +14,10 @@
                 <div class="toolbar">
                     <button class="new-file-button">New file</button>
                     <button class="clear-button">Clear</button>
-                    <button class="undo-button">Undo</button>
-                    <button class="redo-button">Redo</button>
-                    <button class="save-button">Import</button>
-                    <button class="save-button">Export</button>
+                    <button class="undo-button"><i class="fa fa-undo" aria-hidden="true"></i> Undo</button>
+                    <button class="redo-button"><i class="fa fa-redo" aria-hidden="true"></i> Redo</button>
+                    <button class="import-button"><i class="fa-solid fa-upload"></i> Import</button>
+                    <button class="save-button"><i class="fa-solid fa-download"></i> Export</button>
                 </div>
             </header>
             <main>
@@ -25,32 +26,38 @@
                     <label class="range-container"><span>Font size:<br><span class="font-size"></span></span><input class="font-range" type="range" min="5" max="20" step="5" value="5"></label>
                     <label class="range-container"><span>Spray size:<br><span class="spray-size"></span></span><input class="spray-range" type="range" min="3" max="50" step="1" value="5"></label>
                     <div class="button-group">
-                        <button class="pencil-button">Pencil</button>
-                        <button class="line-button">Line</button>
-                        <button class="fill-button">Fill</button>
-                        <button class="square-shape-button">Square</button>
-                        <button class="circle-shape-button">Circle</button>
-                        <button class="draw-text-button">Text</button>
-                        <input type="color" class="color-picker">
-                        <button class="eyedropper-button">Eyedropper</button>
-                        <button class="eraser-button">Eraser</button>
-                        <button class="select-button">Select</button>
-                        <button class="magic-wand-button">Magic wand</button>
-                        <button class="spray-button">Spray paint</button>
-                        <button class="brush-button">Brush</button>
-                        <button class="add-image-button">Add image</button>
+                        <button class="pencil-button" title="Pencil Tool"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="line-button" title="Line Tool"><b>╱</b></button>
+                        <button class="fill-button" title="Bucket Tool"><i class="fa-solid fa-fill-drip"></i></button>
+                        <button class="square-shape-button" title="Square Tool"><i class="fa-regular fa-square"></i> <i class="fa-solid fa-square"></i></button>
+                        <button class="circle-shape-button" title="Circle Tool"><i class="fa-regular fa-circle"></i> <i class="fa-solid fa-circle"></i></button>
+                        <button class="draw-text-button" title="Text Tool"><i class="fa-solid fa-font"></i></button>
+                        <input type="color" class="color-picker primary" title="Primary Color">
+                        <input type="color" class="color-picker secondary" title="Secondary Color">
+                        <button class="eyedropper-button" title="Color Picker Tool"><i class="fa-solid fa-eye-dropper"></i></button>
+                        <button class="eraser-button" title="Eraser Tool"><i class="fa-solid fa-eraser"></i></button>
+                        <button class="select-button" title="Select Tool"><i class="fa-solid fa-vector-square"></i></button>
+                        <button class="spray-button" title="Spray Tool"><i class="fa-solid fa-spray-can"></i></button>
+                        <button class="brush-button" title="Brush Tool"><i class="fa-solid fa-paintbrush"></i></button>
                     </div>
                 </div>
-                <div class="canvas-container">
-                    <canvas class="background-canvas"></canvas>
-                    <canvas class="drawing-canvas layer"></canvas>
-                    <canvas class="select-canvas layer"></canvas>
-                    <canvas class="shadow-canvas layer"></canvas>
-                    <div class="selected-area">
-                        <div class="select-btn-container">
-                            <button class="select-btn copy">Copy</button>
-                        <button class="select-btn cut">Cut</button>
-                        <button class="select-btn paste">Paste</button>
+                <div class="drawing-container">
+                    <div class="inner-tools">
+                        <label><input type="checkbox" id="center-checkbox"> Center</label>
+                        <label><input type="checkbox" id="fill-checkbox"> Fill shape</label>
+                        <label><input type="checkbox" id="rb-erase-checkbox"> Right click erase</label>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas class="background-canvas"></canvas>
+                        <canvas class="drawing-canvas layer"></canvas>
+                        <canvas class="select-canvas layer"></canvas>
+                        <canvas class="shadow-canvas layer"></canvas>
+                        <div class="selected-area">
+                            <div class="select-btn-container">
+                                <button class="select-btn copy">Copy</button>
+                            <button class="select-btn cut">Cut</button>
+                            <button class="select-btn paste">Paste</button>
+                            </div>
                         </div>
                     </div>
                 </div>

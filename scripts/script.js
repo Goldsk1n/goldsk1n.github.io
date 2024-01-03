@@ -6,7 +6,8 @@ const selectCanvas = document.querySelector(".select-canvas");
 const shadowCanvas = document.querySelector(".shadow-canvas");
 const pencilButton = document.querySelector(".pencil-button");
 const eraserButton = document.querySelector(".eraser-button");
-const colorPicker = document.querySelector(".color-picker");
+const primaryColorPicker = document.querySelector(".color-picker.primary");
+const secondaryColorPicker = document.querySelector(".color-picker.secondary");
 const saveButton = document.querySelector(".save-button");
 const popupContainer = document.querySelector(".popup-container");
 const savePopup = document.querySelector(".save-popup");
@@ -41,12 +42,17 @@ const brushButton = document.querySelector(".brush-button");
 const sprayButton = document.querySelector(".spray-button");
 const sprayRange = document.querySelector(".spray-range");
 const spraySizeLabel = document.querySelector(".spray-size");
+const magicWandButton = document.querySelector(".magic-wand-button");
+const rbEraseCheckbox = document.querySelector("#rb-erase-checkbox");
+const fillCheckbox = document.querySelector("#fill-checkbox");
+const centerCheckbox = document.querySelector("#center-checkbox");
 
 const canvasSize = 600;
 
 const activeButtonColor = "rgba(0, 127, 0, 0.7)";
 const shadowColor = "rgba(127, 127, 127, 0.5)";
-let brushColor = "#000000";
+let primaryColor = "#000000";
+let secondaryColor = "#000000";
 let brushSize = 1;
 
 function setCanvasSize(canvas, canvasSize) {
@@ -106,6 +112,10 @@ shadowCtx.fillText(textValue, 0, 0);
 let spraySize;
 updateSpraySize();
 let sprayInterval;
+
+let isCenterModeOn = false;
+let isFillShapeOn = false;
+let isRightClickEraseOn = false;
 
 canvasContainer.addEventListener("mousemove", (e) => {
     if (
@@ -186,12 +196,21 @@ function draw(x, y, pixelSize, pixelSize) {
     } else if (mode === "square") {
         clear(shadowCtx);
 
-        shadowCtx.strokeRect(
-            pathStart.x + pixelSize / 2,
-            pathStart.y + pixelSize / 2,
-            x - pathStart.x,
-            y - pathStart.y
-        );
+        if(isFillShapeOn) {
+            shadowCtx.fillRect(
+                pathStart.x,
+                pathStart.y,
+                x - pathStart.x + pixelSize,
+                y - pathStart.y + pixelSize
+            );
+        } else {
+            shadowCtx.strokeRect(
+                pathStart.x + pixelSize / 2,
+                pathStart.y + pixelSize / 2,
+                x - pathStart.x,
+                y - pathStart.y
+            );
+        }
     } else if (mode === "circle") {
         clear(shadowCtx);
 
@@ -266,11 +285,22 @@ function handleMouseDown(e) {
     redoStack = [];
     updateUndo();
 
-    if (e.button === 2) {
-        activateMode("eraser");
+    let currColor;
+
+    switch (e.button) {
+        case 0:
+            currColor = primaryColor;
+            console.log("a");
+            break;
+        case 2:
+            currColor = secondaryColor;
+            console.log("b");
+            break;
     }
 
-    if (e.button === 0) {
+    if (e.button === 2 && isRightClickEraseOn) {
+        activateMode("eraser");
+    } else {
         if (mode === "text") {
             if (isTypingText) {
                 removeTextCursor();
@@ -280,19 +310,18 @@ function handleMouseDown(e) {
                 shadowCtx.fillStyle = shadowColor;
             } else {
                 textCoords = { x, y };
-                shadowCtx.fillStyle = brushColor;
+                shadowCtx.fillStyle = currColor;
                 isTypingText = true;
                 setTextCursor();
             }
         } else if (mode === "eyedropper") {
             const rgb = drawCtx.getImageData(x, y, 1, 1).data;
-            colorPicker.value = rgbToHex(rgb[0], rgb[1], rgb[2]);
-        } else if (mode === "square") {
-            shadowCtx.strokeStyle = brushColor;
-        } else if (mode === "circle" || mode === "line") {
-            shadowCtx.fillStyle = brushColor;
+            primaryColorPicker.value = rgbToHex(rgb[0], rgb[1], rgb[2]);
+        } else if (mode === "square" || mode === "circle" || mode === "line") {
+            shadowCtx.strokeStyle = currColor;
+            shadowCtx.fillStyle = currColor;
         } else if (mode === "fill") {
-            floodFill(drawCanvas, drawCtx, x, y, toRGBA(brushColor));
+            floodFill(drawCanvas, drawCtx, x, y, toRGBA(currColor));
         } else if (mode === "spray") {
             clear(shadowCtx);
             sprayInterval = setInterval(drawSpray, 20);
@@ -323,13 +352,24 @@ function handleMouseUp(e) {
 
     if (mode === "square") {
         clear(shadowCtx);
-        drawCtx.strokeRect(
-            pathStart.x + pixelSize / 2,
-            pathStart.y + pixelSize / 2,
-            x - pathStart.x,
-            y - pathStart.y
-        );
+        if(isFillShapeOn) {
+            drawCtx.fillRect(
+                pathStart.x,
+                pathStart.y,
+                x - pathStart.x + pixelSize,
+                y - pathStart.y + pixelSize
+            );
+        } else {
+            drawCtx.strokeRect(
+                pathStart.x + pixelSize / 2,
+                pathStart.y + pixelSize / 2,
+                x - pathStart.x,
+                y - pathStart.y
+            );
+        }
+
         shadowCtx.strokeStyle = shadowColor;
+        shadowCtx.fillStyle = shadowColor;
     } else if (mode === "circle") {
         clear(shadowCtx);
         drawPixelatedCircle(
@@ -339,10 +379,12 @@ function handleMouseUp(e) {
             Math.max(x - pathStart.x, y - pathStart.y),
             pixelSize * brushSize
         );
+        shadowCtx.strokeStyle = shadowColor;
         shadowCtx.fillStyle = shadowColor;
     } else if (mode === "line") {
         clear(shadowCtx);
         drawPixelatedLine(drawCtx, pathStart.x, pathStart.y, x, y, pixelSize);
+        shadowCtx.strokeStyle = shadowColor;
         shadowCtx.fillStyle = shadowColor;
     } else if (mode === "eyedropper") {
         activateMode("pencil");
@@ -358,7 +400,7 @@ function handleMouseUp(e) {
     } else if (mode === "spray") {
         clearInterval(sprayInterval);
     }
-    if (e.button === 2) {
+    if (e.button === 2 && isRightClickEraseOn) {
         activateMode(prevMode);
     }
 }
@@ -438,27 +480,20 @@ function elemByMode(mode) {
             return selectButton;
         case "spray":
             return sprayButton;
+        case "wand":
+            return magicWandButton;
     }
 }
 
 pencilButton.addEventListener("click", () => activateMode("pencil"));
-
 eraserButton.addEventListener("click", () => activateMode("eraser"));
-
 lineButton.addEventListener("click", () => activateMode("line"));
-
 squareShapeButton.addEventListener("click", () => activateMode("square"));
-
 circleShapeButton.addEventListener("click", () => activateMode("circle"));
-
 drawTextButton.addEventListener("click", () => activateMode("text"));
-
 eyedropperButton.addEventListener("click", () => activateMode("eyedropper"));
-
 fillButton.addEventListener("click", () => activateMode("fill"));
-
 selectButton.addEventListener("click", () => activateMode("select"));
-
 sprayButton.addEventListener("click", () => activateMode("spray"));
 
 function setLineWidth(width) {
@@ -466,10 +501,10 @@ function setLineWidth(width) {
     shadowCtx.lineWidth = width;
 }
 
-colorPicker.addEventListener("change", () => {
-    brushColor = colorPicker.value;
-    drawCtx.fillStyle = brushColor;
-    drawCtx.strokeStyle = brushColor;
+primaryColorPicker.addEventListener("change", () => {
+    primaryColor = primaryColorPicker.value;
+    drawCtx.fillStyle = primaryColor;
+    drawCtx.strokeStyle = primaryColor;
 });
 
 saveButton.addEventListener("click", () => {
@@ -831,5 +866,17 @@ function setTextCursor() {
 
 function removeTextCursor() {
     clearInterval(textCursorInterval);
-    shadowCtx.fillStyle = brushColor;
+    shadowCtx.fillStyle = primaryColor;
 }
+
+rbEraseCheckbox.addEventListener("change", () => {
+    isRightClickEraseOn = !isRightClickEraseOn;
+});
+
+fillCheckbox.addEventListener("change", () => {
+    isFillShapeOn = !isFillShapeOn;
+});
+
+centerCheckbox.addEventListener("change", () => {
+    isCenterModeOn = !isCenterModeOn;
+});
