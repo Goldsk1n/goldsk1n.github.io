@@ -196,29 +196,45 @@ function draw(x, y, pixelSize, pixelSize) {
     } else if (mode === "square") {
         clear(shadowCtx);
 
+        let startX = pathStart.x, startY = pathStart.y;
+        if(isCenterModeOn) {
+            startX -= x - pathStart.x;
+            startY -= y - pathStart.y;
+        }
+
         if(isFillShapeOn) {
             shadowCtx.fillRect(
-                pathStart.x,
-                pathStart.y,
+                startX,
+                startY,
                 x - pathStart.x + pixelSize,
                 y - pathStart.y + pixelSize
             );
         } else {
             shadowCtx.strokeRect(
-                pathStart.x + pixelSize / 2,
-                pathStart.y + pixelSize / 2,
-                x - pathStart.x,
-                y - pathStart.y
+                startX + pixelSize / 2,
+                startY + pixelSize / 2,
+                x - startX,
+                y - startY
             );
         }
     } else if (mode === "circle") {
         clear(shadowCtx);
 
+        let startX = pathStart.x, startY = pathStart.y;
+
+        let maxRad = Math.max(x - pathStart.x, y - pathStart.y);
+
+        if(!isCenterModeOn) {
+            maxRad = roundToPixel(maxRad / 2);
+            startX += maxRad;
+            startY += maxRad;
+        }
+
         drawPixelatedCircle(
             shadowCtx,
-            pathStart.x,
-            pathStart.y,
-            Math.max(x - pathStart.x, y - pathStart.y),
+            startX,
+            startY,
+            maxRad,
             pixelSize * brushSize
         );
     } else if (mode === "line") {
@@ -298,6 +314,9 @@ function handleMouseDown(e) {
             break;
     }
 
+    drawCtx.fillStyle = currColor;
+    drawCtx.strokeStyle = currColor;
+
     if (e.button === 2 && isRightClickEraseOn) {
         activateMode("eraser");
     } else {
@@ -351,20 +370,27 @@ function handleMouseUp(e) {
     isMouseDown = false;
 
     if (mode === "square") {
+        
         clear(shadowCtx);
+        let startX = pathStart.x, startY = pathStart.y;
+        if(isCenterModeOn) {
+            startX -= x - pathStart.x;
+            startY -= y - pathStart.y;
+        }
+
         if(isFillShapeOn) {
             drawCtx.fillRect(
-                pathStart.x,
-                pathStart.y,
+                startX,
+                startY,
                 x - pathStart.x + pixelSize,
                 y - pathStart.y + pixelSize
             );
         } else {
             drawCtx.strokeRect(
-                pathStart.x + pixelSize / 2,
-                pathStart.y + pixelSize / 2,
-                x - pathStart.x,
-                y - pathStart.y
+                startX + pixelSize / 2,
+                startY + pixelSize / 2,
+                x - startX,
+                y - startY
             );
         }
 
@@ -372,13 +398,25 @@ function handleMouseUp(e) {
         shadowCtx.fillStyle = shadowColor;
     } else if (mode === "circle") {
         clear(shadowCtx);
+
+        let startX = pathStart.x, startY = pathStart.y;
+
+        let maxRad = Math.max(x - pathStart.x, y - pathStart.y);
+
+        if(!isCenterModeOn) {
+            maxRad = roundToPixel(maxRad / 2);
+            startX += maxRad;
+            startY += maxRad;
+        }
+
         drawPixelatedCircle(
             drawCtx,
-            pathStart.x,
-            pathStart.y,
-            Math.max(x - pathStart.x, y - pathStart.y),
+            startX,
+            startY,
+            maxRad,
             pixelSize * brushSize
         );
+
         shadowCtx.strokeStyle = shadowColor;
         shadowCtx.fillStyle = shadowColor;
     } else if (mode === "line") {
@@ -503,8 +541,10 @@ function setLineWidth(width) {
 
 primaryColorPicker.addEventListener("change", () => {
     primaryColor = primaryColorPicker.value;
-    drawCtx.fillStyle = primaryColor;
-    drawCtx.strokeStyle = primaryColor;
+});
+
+secondaryColorPicker.addEventListener("change", () => {
+    secondaryColor = secondaryColorPicker.value;
 });
 
 saveButton.addEventListener("click", () => {
