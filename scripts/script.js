@@ -46,6 +46,7 @@ const magicWandButton = document.querySelector(".magic-wand-button");
 const rbEraseCheckbox = document.querySelector("#rb-erase-checkbox");
 const fillCheckbox = document.querySelector("#fill-checkbox");
 const centerCheckbox = document.querySelector("#center-checkbox");
+const ratioCheckbox = document.querySelector("#ratio-checkbox");
 
 const canvasSize = 600;
 
@@ -116,6 +117,7 @@ let sprayInterval;
 let isCenterModeOn = false;
 let isFillShapeOn = false;
 let isRightClickEraseOn = false;
+let isCircleRatioOn = false;
 
 canvasContainer.addEventListener("mousemove", (e) => {
     if (
@@ -196,13 +198,14 @@ function draw(x, y, pixelSize, pixelSize) {
     } else if (mode === "square") {
         clear(shadowCtx);
 
-        let startX = pathStart.x, startY = pathStart.y;
-        if(isCenterModeOn) {
+        let startX = pathStart.x,
+            startY = pathStart.y;
+        if (isCenterModeOn) {
             startX -= x - pathStart.x;
             startY -= y - pathStart.y;
         }
 
-        if(isFillShapeOn) {
+        if (isFillShapeOn) {
             shadowCtx.fillRect(
                 startX,
                 startY,
@@ -220,21 +223,39 @@ function draw(x, y, pixelSize, pixelSize) {
     } else if (mode === "circle") {
         clear(shadowCtx);
 
-        let startX = pathStart.x, startY = pathStart.y;
+        let startX = pathStart.x,
+            startY = pathStart.y;
 
-        let maxRad = Math.max(x - pathStart.x, y - pathStart.y);
+        let pathX = x - pathStart.x;
+        let pathY = y - pathStart.y;
 
-        if(!isCenterModeOn) {
-            maxRad = roundToPixel(maxRad / 2);
-            startX += maxRad;
-            startY += maxRad;
+        console.log(pathX, pathY);
+
+        let radX, radY;
+
+        if (isCircleRatioOn) {
+            let maxRad = Math.max(Math.abs(pathX), Math.abs(pathY));
+
+            radX = (pathX > 0) ? maxRad : -maxRad;
+            radY = (pathY > 0) ? maxRad : -maxRad;
+        } else {
+            radX = pathX;
+            radY = pathY;
         }
 
-        drawPixelatedCircle(
+        if (!isCenterModeOn) {
+            radX /= 2;
+            radY /= 2;
+            startX += radX;
+            startY += radY;
+        }
+
+        drawPixelatedEllipse(
             shadowCtx,
             startX,
             startY,
-            maxRad,
+            Math.abs(radX),
+            Math.abs(radY),
             pixelSize * brushSize
         );
     } else if (mode === "line") {
@@ -370,15 +391,15 @@ function handleMouseUp(e) {
     isMouseDown = false;
 
     if (mode === "square") {
-        
         clear(shadowCtx);
-        let startX = pathStart.x, startY = pathStart.y;
-        if(isCenterModeOn) {
+        let startX = pathStart.x,
+            startY = pathStart.y;
+        if (isCenterModeOn) {
             startX -= x - pathStart.x;
             startY -= y - pathStart.y;
         }
 
-        if(isFillShapeOn) {
+        if (isFillShapeOn) {
             drawCtx.fillRect(
                 startX,
                 startY,
@@ -399,21 +420,39 @@ function handleMouseUp(e) {
     } else if (mode === "circle") {
         clear(shadowCtx);
 
-        let startX = pathStart.x, startY = pathStart.y;
+        let startX = pathStart.x,
+            startY = pathStart.y;
 
-        let maxRad = Math.max(x - pathStart.x, y - pathStart.y);
+        let pathX = x - pathStart.x;
+        let pathY = y - pathStart.y;
 
-        if(!isCenterModeOn) {
-            maxRad = roundToPixel(maxRad / 2);
-            startX += maxRad;
-            startY += maxRad;
+        console.log(pathX, pathY);
+
+        let radX, radY;
+
+        if (isCircleRatioOn) {
+            let maxRad = Math.max(Math.abs(pathX), Math.abs(pathY));
+
+            radX = (pathX > 0) ? maxRad : -maxRad;
+            radY = (pathY > 0) ? maxRad : -maxRad;
+        } else {
+            radX = pathX;
+            radY = pathY;
         }
 
-        drawPixelatedCircle(
+        if (!isCenterModeOn) {
+            radX /= 2;
+            radY /= 2;
+            startX += radX;
+            startY += radY;
+        }
+
+        drawPixelatedEllipse(
             drawCtx,
             startX,
             startY,
-            maxRad,
+            Math.abs(radX),
+            Math.abs(radY),
             pixelSize * brushSize
         );
 
@@ -602,22 +641,45 @@ function updateCanvasSize() {
     canvasSizeLabel.textContent = pixelCount;
 }
 
-function drawPixelatedCircle(ctx, centerX, centerY, radius, pixelSize) {
-    let x = radius;
-    let y = 0;
-    let radiusError = 1 - x;
+function drawPixelatedEllipse(ctx, xc, yc, a, b, pixelSize) {
+    const a2 = a * a;
+    const b2 = b * b;
+    const twoa2 = 2 * a2;
+    const twob2 = 2 * b2;
+    let p;
+    let x = 0,
+        y = b;
+    let px = 0,
+        py = twoa2 * y;
 
-    while (x >= y) {
-        drawPixelQuadrants(ctx, centerX, centerY, x, y, pixelSize);
-
-        y += pixelSize / brushSize;
-
-        if (radiusError < 0) {
-            radiusError += 2 * y + pixelSize;
-        } else {
-            x -= pixelSize / brushSize;
-            radiusError += 2 * (y - x) + pixelSize;
+    /* Region 1 */
+    p = Math.round(b2 - a2 * b + 0.25 * a2);
+    while (px < py) {
+        x++;
+        px += twob2;
+        if (p < 0) p += b2 + px;
+        else {
+            y--;
+            py -= twoa2;
+            p += b2 + px - py;
         }
+        drawPixelQuadrants(ctx, xc, yc, x, y, pixelSize);
+    }
+
+    /* Region 2 */
+    p = Math.round(
+        b2 * (x + 0.5) * (x + 0.5) + a2 * (y - 1) * (y - 1) - a2 * b2
+    );
+    while (y > 0) {
+        y--;
+        py -= twoa2;
+        if (p > 0) p += a2 - py;
+        else {
+            x++;
+            px += twob2;
+            p += a2 - py + px;
+        }
+        drawPixelQuadrants(ctx, xc, yc, x, y, pixelSize);
     }
 }
 
@@ -626,17 +688,19 @@ function drawPixelQuadrants(ctx, centerX, centerY, x, y, pixelSize) {
     drawPixel(ctx, centerX - x, centerY + y, pixelSize);
     drawPixel(ctx, centerX + x, centerY - y, pixelSize);
     drawPixel(ctx, centerX - x, centerY - y, pixelSize);
-
-    if (x != y) {
-        drawPixel(ctx, centerX + y, centerY + x, pixelSize);
-        drawPixel(ctx, centerX - y, centerY + x, pixelSize);
-        drawPixel(ctx, centerX + y, centerY - x, pixelSize);
-        drawPixel(ctx, centerX - y, centerY - x, pixelSize);
-    }
 }
 
 function drawPixel(ctx, x, y, pixelSize) {
-    ctx.fillRect(x, y, pixelSize, pixelSize);
+    ctx.fillRect(
+        circlePointToPixel(x),
+        circlePointToPixel(y),
+        pixelSize,
+        pixelSize
+    );
+}
+
+function circlePointToPixel(value) {
+    return Math.round(value / pixelSize) * pixelSize;
 }
 
 clearButton.addEventListener("click", () => {
@@ -919,4 +983,8 @@ fillCheckbox.addEventListener("change", () => {
 
 centerCheckbox.addEventListener("change", () => {
     isCenterModeOn = !isCenterModeOn;
+});
+
+ratioCheckbox.addEventListener("change", () => {
+    isCircleRatioOn = !isCircleRatioOn;
 });
