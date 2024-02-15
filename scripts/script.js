@@ -47,6 +47,7 @@ const rbEraseCheckbox = document.querySelector("#rb-erase-checkbox");
 const fillCheckbox = document.querySelector("#fill-checkbox");
 const centerCheckbox = document.querySelector("#center-checkbox");
 const ratioCheckbox = document.querySelector("#ratio-checkbox");
+const buttonGroup = document.querySelectorAll(".button-group button");
 
 const canvasSize = 600;
 
@@ -89,7 +90,7 @@ let isTypingText = false;
 let textValue = "";
 let prevMode, mode;
 let currentElem = pencilButton;
-activateMode("pencil");
+activateMode(currentElem);
 shadowCtx.fillStyle = shadowColor;
 
 let selectWidth, selectHeight, selectTop, selectLeft;
@@ -323,14 +324,17 @@ function handleMouseDown(e) {
     updateUndo();
 
     let currColor;
+    let currColorPicker;
 
     switch (e.button) {
         case 0:
             currColor = primaryColor;
+            currColorPicker = primaryColorPicker;
             console.log("a");
             break;
         case 2:
             currColor = secondaryColor;
+            currColorPicker = secondaryColorPicker;
             console.log("b");
             break;
     }
@@ -356,7 +360,7 @@ function handleMouseDown(e) {
             }
         } else if (mode === "eyedropper") {
             const rgb = drawCtx.getImageData(x, y, 1, 1).data;
-            primaryColorPicker.value = rgbToHex(rgb[0], rgb[1], rgb[2]);
+            currColorPicker.value = rgbToHex(rgb[0], rgb[1], rgb[2]);
         } else if (mode === "square" || mode === "circle" || mode === "line") {
             shadowCtx.strokeStyle = currColor;
             shadowCtx.fillStyle = currColor;
@@ -527,51 +531,17 @@ window.addEventListener("keyup", (e) => {
     delete keysPressed[e.key];
 });
 
-function activateMode(modeName) {
+function activateMode(modeButton) {
     prevMode = mode;
-    mode = modeName;
+    mode = modeButton;
     currentElem.style.backgroundColor = "white";
-    currentElem = elemByMode(mode);
+    currentElem = mode;
     currentElem.style.backgroundColor = activeButtonColor;
 }
 
-function elemByMode(mode) {
-    switch (mode) {
-        case "pencil":
-            return pencilButton;
-        case "eraser":
-            return eraserButton;
-        case "line":
-            return lineButton;
-        case "square":
-            return squareShapeButton;
-        case "circle":
-            return circleShapeButton;
-        case "text":
-            return drawTextButton;
-        case "eyedropper":
-            return eyedropperButton;
-        case "fill":
-            return fillButton;
-        case "select":
-            return selectButton;
-        case "spray":
-            return sprayButton;
-        case "wand":
-            return magicWandButton;
-    }
+for(const button of buttonGroup) {
+    button.addEventListener("click", (e) => activateMode(e.currentTarget));
 }
-
-pencilButton.addEventListener("click", () => activateMode("pencil"));
-eraserButton.addEventListener("click", () => activateMode("eraser"));
-lineButton.addEventListener("click", () => activateMode("line"));
-squareShapeButton.addEventListener("click", () => activateMode("square"));
-circleShapeButton.addEventListener("click", () => activateMode("circle"));
-drawTextButton.addEventListener("click", () => activateMode("text"));
-eyedropperButton.addEventListener("click", () => activateMode("eyedropper"));
-fillButton.addEventListener("click", () => activateMode("fill"));
-selectButton.addEventListener("click", () => activateMode("select"));
-sprayButton.addEventListener("click", () => activateMode("spray"));
 
 function setLineWidth(width) {
     drawCtx.lineWidth = width;
