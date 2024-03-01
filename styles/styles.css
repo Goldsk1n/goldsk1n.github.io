@@ -135,7 +135,7 @@ canvas.layer {
     font-size: 1.2rem;
 }
 
-.range-container, .inner-tools {
+.inner-tools, .tool-options {
     display: flex;
     justify-content: space-evenly;
     gap: 10px;
@@ -182,4 +182,8 @@ canvas.layer {
 
 .select-btn {
     font-size: 0.8rem;
+}
+
+.tool-option-name {
+    font-weight: bold;
 }

@@ -22,9 +22,6 @@
             </header>
             <main>
                 <div class="sidebar">
-                    <label class="range-container"><span>Brush size:<br><span class="brush-size"></span></span><input class="brush-range" type="range" min="1" max="10" step="1" value="1"></label>
-                    <label class="range-container"><span>Font size:<br><span class="font-size"></span></span><input class="font-range" type="range" min="5" max="20" step="5" value="5"></label>
-                    <label class="range-container"><span>Spray size:<br><span class="spray-size"></span></span><input class="spray-range" type="range" min="3" max="50" step="1" value="5"></label>
                     <div class="button-group">
                         <button class="pencil-button" title="Pencil Tool"><i class="fa-solid fa-pencil"></i></button>
                         <button class="line-button" title="Line Tool"><b>╱</b></button>
@@ -38,15 +35,20 @@
                         <button class="eraser-button" title="Eraser Tool"><i class="fa-solid fa-eraser"></i></button>
                         <button class="select-button" title="Select Tool"><i class="fa-solid fa-vector-square"></i></button>
                         <button class="spray-button" title="Spray Tool"><i class="fa-solid fa-spray-can"></i></button>
-                        <button class="brush-button" title="Brush Tool"><i class="fa-solid fa-paintbrush"></i></button>
                     </div>
                 </div>
                 <div class="drawing-container">
                     <div class="inner-tools">
-                        <label title="Keep 1:1 ratio"><input type="checkbox" id="ratio-checkbox"> Ratio</label>
-                        <label><input type="checkbox" id="center-checkbox"> Center</label>
-                        <label><input type="checkbox" id="fill-checkbox"> Fill shape</label>
-                        <label><input type="checkbox" id="rb-erase-checkbox"> Right click erase</label>
+                        <div class="tool-option-name"></div>
+                        <div class="tool-options">
+                            <label class="brush-range-container"><span>Brush size:<br><span class="brush-size"></span></span><input class="brush-range" type="range" min="1" max="10" step="1" value="1"></label>
+                            <label class="font-range-container"><span>Font size:<br><span class="font-size"></span></span><input class="font-range" type="range" min="5" max="20" step="5" value="5"></label>
+                            <label class="spray-range-container"><span>Spray size:<br><span class="spray-size"></span></span><input class="spray-range" type="range" min="3" max="50" step="1" value="5"></label>
+                            <label class="ratio-label" title="Keep 1:1 ratio"><input type="checkbox" id="ratio-checkbox"> Ratio</label>
+                            <label class="center-label"><input type="checkbox" id="center-checkbox"> Center</label>
+                            <label class="fill-label"><input type="checkbox" id="fill-checkbox"> Fill shape</label>
+                            <label class="rb-erase-label"><input type="checkbox" id="rb-erase-checkbox"> Right click erase</label>
+                        </div>                        
                     </div>
                     <div class="canvas-container">
                         <canvas class="background-canvas"></canvas>
@@ -56,8 +58,8 @@
                         <div class="selected-area">
                             <div class="select-btn-container">
                                 <button class="select-btn copy">Copy</button>
-                            <button class="select-btn cut">Cut</button>
-                            <button class="select-btn paste">Paste</button>
+                                <button class="select-btn cut">Cut</button>
+                                <button class="select-btn paste">Paste</button>
                             </div>
                         </div>
                     </div>

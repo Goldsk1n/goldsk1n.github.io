@@ -38,7 +38,6 @@ const canvasContainer = document.querySelector(".canvas-container");
 const copySelectedButton = document.querySelector(".select-btn.copy");
 const cutSelectedButton = document.querySelector(".select-btn.cut");
 const pasteSelectedButton = document.querySelector(".select-btn.paste");
-const brushButton = document.querySelector(".brush-button");
 const sprayButton = document.querySelector(".spray-button");
 const sprayRange = document.querySelector(".spray-range");
 const spraySizeLabel = document.querySelector(".spray-size");
@@ -48,6 +47,15 @@ const fillCheckbox = document.querySelector("#fill-checkbox");
 const centerCheckbox = document.querySelector("#center-checkbox");
 const ratioCheckbox = document.querySelector("#ratio-checkbox");
 const buttonGroup = document.querySelectorAll(".button-group button");
+const toolOptionName = document.querySelector(".tool-option-name");
+const toolOptions = document.querySelectorAll(".tool-options label");
+const rbEraseLabel = document.querySelector(".rb-erase-label");
+const ratioLabel = document.querySelector(".ratio-label");
+const fillLabel = document.querySelector(".fill-label");
+const centerLabel = document.querySelector(".center-label");
+const brushRangeContainer = document.querySelector(".brush-range-container");
+const fontRangeContainer = document.querySelector(".font-range-container");
+const sprayRangeContainer = document.querySelector(".spray-range-container");
 
 const canvasSize = 600;
 
@@ -122,7 +130,7 @@ let isCircleRatioOn = false;
 
 canvasContainer.addEventListener("mousemove", (e) => {
     if (
-        (mode === "pencil" || mode === "eraser" || !isMouseDown) &&
+        (mode === pencilButton || mode === eraserButton || !isMouseDown) &&
         !isTypingText
     ) {
         if (!isAboveSelectedArea) {
@@ -178,7 +186,7 @@ shadowCanvas.addEventListener("mouseout", () => {
 });
 
 function draw(x, y, pixelSize, pixelSize) {
-    if (mode === "pencil") {
+    if (mode === pencilButton) {
         drawCtx.fillRect(
             pixelSize *
                 Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
@@ -187,7 +195,7 @@ function draw(x, y, pixelSize, pixelSize) {
             pixelSize * brushSize,
             pixelSize * brushSize
         );
-    } else if (mode === "eraser") {
+    } else if (mode === eraserButton) {
         drawCtx.clearRect(
             pixelSize *
                 Math.ceil((x - (pixelSize * brushSize) / 2) / pixelSize),
@@ -196,7 +204,7 @@ function draw(x, y, pixelSize, pixelSize) {
             pixelSize * brushSize,
             pixelSize * brushSize
         );
-    } else if (mode === "square") {
+    } else if (mode === squareShapeButton) {
         clear(shadowCtx);
 
         let startX = pathStart.x,
@@ -221,7 +229,7 @@ function draw(x, y, pixelSize, pixelSize) {
                 y - startY
             );
         }
-    } else if (mode === "circle") {
+    } else if (mode === circleShapeButton) {
         clear(shadowCtx);
 
         let startX = pathStart.x,
@@ -229,8 +237,6 @@ function draw(x, y, pixelSize, pixelSize) {
 
         let pathX = x - pathStart.x;
         let pathY = y - pathStart.y;
-
-        console.log(pathX, pathY);
 
         let radX, radY;
 
@@ -259,11 +265,11 @@ function draw(x, y, pixelSize, pixelSize) {
             Math.abs(radY),
             pixelSize * brushSize
         );
-    } else if (mode === "line") {
+    } else if (mode === lineButton) {
         clear(shadowCtx);
 
         drawPixelatedLine(shadowCtx, pathStart.x, pathStart.y, x, y, pixelSize);
-    } else if (mode === "select") {
+    } else if (mode === selectButton) {
         clear(selectCtx);
 
         const width = x - pathStart.x;
@@ -330,22 +336,20 @@ function handleMouseDown(e) {
         case 0:
             currColor = primaryColor;
             currColorPicker = primaryColorPicker;
-            console.log("a");
             break;
         case 2:
             currColor = secondaryColor;
             currColorPicker = secondaryColorPicker;
-            console.log("b");
             break;
     }
 
     drawCtx.fillStyle = currColor;
     drawCtx.strokeStyle = currColor;
 
-    if (e.button === 2 && isRightClickEraseOn) {
-        activateMode("eraser");
+    if (e.button === 2 && isRightClickEraseOn && mode == pencilButton) {
+        activateMode(eraserButton);
     } else {
-        if (mode === "text") {
+        if (mode === drawTextButton) {
             if (isTypingText) {
                 removeTextCursor();
                 drawCtx.fillText(textValue, textCoords.x, textCoords.y);
@@ -358,15 +362,15 @@ function handleMouseDown(e) {
                 isTypingText = true;
                 setTextCursor();
             }
-        } else if (mode === "eyedropper") {
+        } else if (mode === eyedropperButton) {
             const rgb = drawCtx.getImageData(x, y, 1, 1).data;
             currColorPicker.value = rgbToHex(rgb[0], rgb[1], rgb[2]);
-        } else if (mode === "square" || mode === "circle" || mode === "line") {
+        } else if (mode === squareShapeButton || mode === circleShapeButton || mode === lineButton) {
             shadowCtx.strokeStyle = currColor;
             shadowCtx.fillStyle = currColor;
-        } else if (mode === "fill") {
+        } else if (mode === fillButton) {
             floodFill(drawCanvas, drawCtx, x, y, toRGBA(currColor));
-        } else if (mode === "spray") {
+        } else if (mode === sprayButton) {
             clear(shadowCtx);
             sprayInterval = setInterval(drawSpray, 20);
         }
@@ -394,7 +398,7 @@ shadowCanvas.addEventListener("mouseup", handleMouseUp);
 function handleMouseUp(e) {
     isMouseDown = false;
 
-    if (mode === "square") {
+    if (mode === squareShapeButton) {
         clear(shadowCtx);
         let startX = pathStart.x,
             startY = pathStart.y;
@@ -421,7 +425,7 @@ function handleMouseUp(e) {
 
         shadowCtx.strokeStyle = shadowColor;
         shadowCtx.fillStyle = shadowColor;
-    } else if (mode === "circle") {
+    } else if (mode === circleShapeButton) {
         clear(shadowCtx);
 
         let startX = pathStart.x,
@@ -429,8 +433,6 @@ function handleMouseUp(e) {
 
         let pathX = x - pathStart.x;
         let pathY = y - pathStart.y;
-
-        console.log(pathX, pathY);
 
         let radX, radY;
 
@@ -462,15 +464,15 @@ function handleMouseUp(e) {
 
         shadowCtx.strokeStyle = shadowColor;
         shadowCtx.fillStyle = shadowColor;
-    } else if (mode === "line") {
+    } else if (mode === lineButton) {
         clear(shadowCtx);
         drawPixelatedLine(drawCtx, pathStart.x, pathStart.y, x, y, pixelSize);
         shadowCtx.strokeStyle = shadowColor;
         shadowCtx.fillStyle = shadowColor;
-    } else if (mode === "eyedropper") {
-        activateMode("pencil");
+    } else if (mode === eyedropperButton) {
+        activateMode(pencilButton);
     } else if (
-        mode === "select" &&
+        mode === selectButton &&
         (selectWidth > pixelSize || selectHeight > pixelSize)
     ) {
         selectedArea.style.display = "block";
@@ -478,10 +480,10 @@ function handleMouseUp(e) {
         selectedArea.style.left = selectLeft + "px";
         selectedArea.style.width = selectWidth + "px";
         selectedArea.style.height = selectHeight + "px";
-    } else if (mode === "spray") {
+    } else if (mode === sprayButton) {
         clearInterval(sprayInterval);
     }
-    if (e.button === 2 && isRightClickEraseOn) {
+    if (e.button === 2 && isRightClickEraseOn && mode == eraserButton) {
         activateMode(prevMode);
     }
 }
@@ -537,6 +539,36 @@ function activateMode(modeButton) {
     currentElem.style.backgroundColor = "white";
     currentElem = mode;
     currentElem.style.backgroundColor = activeButtonColor;
+    toolOptionName.innerText = modeButton.title;
+
+    toolOptions.forEach(v => v.style.display = "none");
+
+    switch(modeButton) {
+        case pencilButton:
+            brushRangeContainer.style.display = "block";
+            rbEraseLabel.style.display = "block";
+            break;
+        case circleShapeButton:
+            brushRangeContainer.style.display = "block";
+            centerLabel.style.display = "block";
+            ratioLabel.style.display = "block";
+            break;
+        case squareShapeButton:
+            brushRangeContainer.style.display = "block";
+            centerLabel.style.display = "block";
+            fillLabel.style.display = "block";
+            break;
+        case sprayButton:
+            sprayRangeContainer.style.display = "block";
+            break;
+        case drawTextButton:
+            fontRangeContainer.style.display = "block";
+            break;
+        case lineButton:
+        case eraserButton:
+            brushRangeContainer.style.display = "block";
+            break;
+    }
 }
 
 for(const button of buttonGroup) {
