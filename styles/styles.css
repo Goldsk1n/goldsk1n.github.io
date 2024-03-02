@@ -13,8 +13,19 @@
     font-display: block;
 }
 
+:root {
+    --main-bg-color: #333333;
+    --secondary-bg-color: #222222;
+    --drawing-container-color: #141518;
+    --text-color: #EEEEEE;
+    --border-color: #000000;
+    --hover-color: #444444;
+}
+
 body {
+    height: 100vh;
     font-family: Arial, Helvetica, sans-serif;
+    color: var(--text-color);
     -webkit-touch-callout: none; /* Safari */
         -webkit-user-select: none; /* Chrome */     
            -moz-user-select: none; /* Firefox */
@@ -22,13 +33,57 @@ body {
                 user-select: none; 
 }
 
+.container {
+    height: 100%;
+    background-color: var(--main-bg-color);
+}
+
 .sidebar {
-    width: 200px;
-    height: 632px;
+    padding: 0 10px;
+    background-color: var(--main-bg-color);
+}
+
+.sidebar h3 {
+    text-align: center;
     padding: 10px;
+}
+
+.drawing-field {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.drawing-container {
+    width: 100%;
+    background-color: var(--drawing-container-color);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    align-items: center;
+}
+
+.inner-tools {
+    width: 100%;
+    background-color: var(--secondary-bg-color);
+    padding: 10px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.inner-tools label {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.tool-options {
+    display: flex;
+    justify-content: space-evenly;
+    gap: 20px;
+    align-items: center;
+    text-align: center;
 }
 
 .color-picker {
@@ -36,18 +91,20 @@ body {
 }
 
 .toolbar {
-    padding: 10px;
     display: flex;
     justify-content: space-evenly;
-    background-color: #EEE;
+    background-color: var(--main-bg-color);
+    border: 1px solid var(--border-color);
 }
 
 button {
-    padding: 5px 10px;
+    padding: 15px 10px;
     font-size: 1.2rem;
-    background-color: white;
     border: none;
+    border-radius: 2px;
     font-weight: 600;
+    background-color: var(--main-bg-color);
+    color: var(--text-color);
 }
 
 button, .color-picker {
@@ -55,17 +112,11 @@ button, .color-picker {
 }
 
 button:hover, .color-picker:hover {
-    outline: 3px solid black;
+    background-color: var(--hover-color);
 }
 
 .color-picker {
     height: 40px;
-}
-
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 header {
@@ -75,11 +126,11 @@ header {
 main {
     display: flex;
     margin: 0 auto;
-    gap: 20px;
 }
 
 .canvas-container {
     position: relative;
+    background-color: white;
 }
 
 canvas {
@@ -114,6 +165,10 @@ canvas.layer {
     background-color: #222222;
 }
 
+.save-file {
+    padding: 7px;
+}
+
 .close-popup {
     background-color: rgba(0, 0, 0, 0);
     color: #cccccc;
@@ -121,6 +176,7 @@ canvas.layer {
     position: absolute;
     right: 0;
     top: 0;
+    padding: 5px;
 }
 
 .file-name {
@@ -135,19 +191,7 @@ canvas.layer {
     font-size: 1.2rem;
 }
 
-.inner-tools, .tool-options {
-    display: flex;
-    justify-content: space-evenly;
-    gap: 10px;
-    align-items: center;
-    text-align: center;
-}
-
-.inner-tools {
-    padding: 5px 0;
-}
-
-.brush-range {
+.brush-range, .font-range, .spray-range {
     cursor: pointer;
 }
 
@@ -161,7 +205,6 @@ canvas.layer {
 .button-group {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px 5px;
 }
 
 .selected-area {

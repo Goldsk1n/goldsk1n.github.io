@@ -57,9 +57,10 @@ const brushRangeContainer = document.querySelector(".brush-range-container");
 const fontRangeContainer = document.querySelector(".font-range-container");
 const sprayRangeContainer = document.querySelector(".spray-range-container");
 
-const canvasSize = 600;
+const canvasSize = document.documentElement.clientHeight - 150;
 
-const activeButtonColor = "rgba(0, 127, 0, 0.7)";
+const mainBgColor = "#333333";
+const activeButtonColor = "#0075FF";
 const shadowColor = "rgba(127, 127, 127, 0.5)";
 let primaryColor = "#000000";
 let secondaryColor = "#000000";
@@ -536,7 +537,7 @@ window.addEventListener("keyup", (e) => {
 function activateMode(modeButton) {
     prevMode = mode;
     mode = modeButton;
-    currentElem.style.backgroundColor = "white";
+    currentElem.style.backgroundColor = mainBgColor;
     currentElem = mode;
     currentElem.style.backgroundColor = activeButtonColor;
     toolOptionName.innerText = modeButton.title;
@@ -545,28 +546,28 @@ function activateMode(modeButton) {
 
     switch(modeButton) {
         case pencilButton:
-            brushRangeContainer.style.display = "block";
-            rbEraseLabel.style.display = "block";
+            brushRangeContainer.style.display = "flex";
+            rbEraseLabel.style.display = "flex";
             break;
         case circleShapeButton:
-            brushRangeContainer.style.display = "block";
-            centerLabel.style.display = "block";
-            ratioLabel.style.display = "block";
+            brushRangeContainer.style.display = "flex";
+            centerLabel.style.display = "flex";
+            ratioLabel.style.display = "flex";
             break;
         case squareShapeButton:
-            brushRangeContainer.style.display = "block";
-            centerLabel.style.display = "block";
-            fillLabel.style.display = "block";
+            brushRangeContainer.style.display = "flex";
+            centerLabel.style.display = "flex";
+            fillLabel.style.display = "flex";
             break;
         case sprayButton:
-            sprayRangeContainer.style.display = "block";
+            sprayRangeContainer.style.display = "flex";
             break;
         case drawTextButton:
-            fontRangeContainer.style.display = "block";
+            fontRangeContainer.style.display = "flex";
             break;
         case lineButton:
         case eraserButton:
-            brushRangeContainer.style.display = "block";
+            brushRangeContainer.style.display = "flex";
             break;
     }
 }
